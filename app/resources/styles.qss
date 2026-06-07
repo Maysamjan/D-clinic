@@ -1,0 +1,205 @@
+/* D-Clinic — modern medical software theme */
+
+* {
+    font-family: "Segoe UI", "Vazirmatn", "Tahoma", sans-serif;
+    font-size: 14px;
+    outline: none;
+}
+
+QWidget {
+    color: #1f2a37;
+    background-color: #f3f6fb;
+}
+
+/* ---------- Sidebar ---------- */
+#Sidebar {
+    background-color: #0f2942;
+    border: none;
+}
+#Sidebar QLabel#BrandTitle {
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 8px;
+}
+#Sidebar QLabel#BrandSub {
+    color: #8fb0cc;
+    font-size: 12px;
+}
+QPushButton#NavButton {
+    color: #cdddea;
+    background-color: transparent;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 16px;
+    text-align: right;
+    font-size: 15px;
+}
+QPushButton#NavButton:hover {
+    background-color: #16395a;
+    color: #ffffff;
+}
+QPushButton#NavButton:checked {
+    background-color: #2563eb;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+/* ---------- Top header ---------- */
+#Header {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e3e8ef;
+}
+#Header QLabel#PageTitle {
+    font-size: 20px;
+    font-weight: bold;
+    color: #0f2942;
+}
+#Header QLabel#ClinicName {
+    font-size: 15px;
+    font-weight: bold;
+    color: #2563eb;
+}
+#Header QLabel#UserChip {
+    color: #475569;
+    font-size: 13px;
+}
+
+/* ---------- Cards ---------- */
+QFrame#Card {
+    background-color: #ffffff;
+    border: 1px solid #e6ebf2;
+    border-radius: 14px;
+}
+QFrame#StatCard {
+    background-color: #ffffff;
+    border: 1px solid #e6ebf2;
+    border-radius: 14px;
+}
+QLabel#StatValue {
+    font-size: 26px;
+    font-weight: bold;
+    color: #0f2942;
+}
+QLabel#StatLabel {
+    font-size: 13px;
+    color: #64748b;
+}
+QLabel#CardTitle {
+    font-size: 16px;
+    font-weight: bold;
+    color: #0f2942;
+}
+
+/* ---------- Inputs ---------- */
+QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QDateEdit, QPlainTextEdit, QTextEdit {
+    background-color: #ffffff;
+    border: 1px solid #cfd8e3;
+    border-radius: 8px;
+    padding: 8px 10px;
+    selection-background-color: #2563eb;
+    selection-color: #ffffff;
+}
+QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus,
+QDateEdit:focus, QPlainTextEdit:focus, QTextEdit:focus {
+    border: 1px solid #2563eb;
+}
+QComboBox::drop-down { border: none; width: 22px; }
+QComboBox QAbstractItemView {
+    background: #ffffff;
+    border: 1px solid #cfd8e3;
+    selection-background-color: #2563eb;
+    selection-color: #ffffff;
+}
+
+/* ---------- Buttons ---------- */
+QPushButton {
+    background-color: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 18px;
+    font-weight: bold;
+}
+QPushButton:hover { background-color: #1d4ed8; }
+QPushButton:pressed { background-color: #1e40af; }
+QPushButton:disabled { background-color: #9db8e8; color: #eef2ff; }
+
+QPushButton#Secondary {
+    background-color: #eef2f8;
+    color: #1f2a37;
+    border: 1px solid #cfd8e3;
+}
+QPushButton#Secondary:hover { background-color: #e2e8f0; }
+
+QPushButton#Danger { background-color: #dc2626; }
+QPushButton#Danger:hover { background-color: #b91c1c; }
+
+QPushButton#Success { background-color: #16a34a; }
+QPushButton#Success:hover { background-color: #15803d; }
+
+QPushButton#Ghost {
+    background-color: transparent;
+    color: #2563eb;
+    border: 1px solid #2563eb;
+}
+QPushButton#Ghost:hover { background-color: #e8f0fe; }
+
+/* ---------- Tables ---------- */
+QTableWidget, QTableView {
+    background-color: #ffffff;
+    border: 1px solid #e6ebf2;
+    border-radius: 10px;
+    gridline-color: #eef2f7;
+    selection-background-color: #dbe7ff;
+    selection-color: #0f2942;
+}
+QHeaderView::section {
+    background-color: #f1f5fb;
+    color: #475569;
+    padding: 10px;
+    border: none;
+    border-bottom: 1px solid #e3e8ef;
+    font-weight: bold;
+}
+QTableWidget::item { padding: 6px; }
+
+/* ---------- Tabs ---------- */
+QTabWidget::pane { border: 1px solid #e6ebf2; border-radius: 10px; background: #fff; }
+QTabBar::tab {
+    background: #eef2f8;
+    color: #475569;
+    padding: 9px 18px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    margin: 2px;
+}
+QTabBar::tab:selected { background: #2563eb; color: #fff; font-weight: bold; }
+
+/* ---------- Scrollbars ---------- */
+QScrollBar:vertical { background: transparent; width: 10px; margin: 2px; }
+QScrollBar::handle:vertical { background: #c3cedd; border-radius: 5px; min-height: 30px; }
+QScrollBar::handle:vertical:hover { background: #9fb0c4; }
+QScrollBar::add-line, QScrollBar::sub-line { height: 0; }
+QScrollBar:horizontal { background: transparent; height: 10px; margin: 2px; }
+QScrollBar::handle:horizontal { background: #c3cedd; border-radius: 5px; min-width: 30px; }
+
+/* ---------- Login ---------- */
+#LoginCard {
+    background-color: #ffffff;
+    border-radius: 18px;
+    border: 1px solid #e6ebf2;
+}
+#LoginTitle { font-size: 24px; font-weight: bold; color: #0f2942; }
+#LoginSub { font-size: 14px; color: #64748b; }
+
+/* ---------- Timeline ---------- */
+QFrame#TimelineItem {
+    background-color: #ffffff;
+    border: 1px solid #e6ebf2;
+    border-radius: 12px;
+}
+QLabel#TimelineDate { color: #2563eb; font-weight: bold; font-size: 13px; }
+QLabel#TimelineTitle { font-weight: bold; font-size: 15px; color: #0f2942; }
+QLabel#TimelineNotes { color: #64748b; font-size: 13px; }
+QLabel#TimelineCost { color: #16a34a; font-weight: bold; }

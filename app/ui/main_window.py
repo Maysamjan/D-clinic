@@ -1,0 +1,208 @@
+"""Main application window: sidebar navigation + stacked pages."""
+
+from __future__ import annotations
+
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (
+    QButtonGroup, QFrame, QHBoxLayout, QLabel, QMainWindow, QMessageBox,
+    QPushButton, QStackedWidget, QVBoxLayout, QWidget
+)
+
+from .. import config
+from ..models import clinic as clinic_model
+from ..services import session
+from .dashboard import DashboardPage
+from .patient_file import PatientFilePage
+from .patients_page import PatientsPage
+from .reports_page import ReportsPage
+from .services_page import ServicesPage
+from .settings_page import SettingsPage
+from .users_page import UsersPage
+
+
+class MainWindow(QMainWindow):
+    def __init__(self, on_logout=None):
+        super().__init__()
+        self._on_logout = on_logout
+        self.setWindowTitle(config.APP_NAME + " — " + config.APP_TITLE)
+        self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
+        self.resize(1280, 800)
+        self._nav_buttons: dict[str, QPushButton] = {}
+        self._build()
+        self._go("dashboard")
+
+    # -- Construction -----------------------------------------------------
+    def _build(self):
+        central = QWidget()
+        self.setCentralWidget(central)
+        root = QHBoxLayout(central)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
+
+        root.addWidget(self._build_sidebar())
+
+        right = QWidget()
+        rlayout = QVBoxLayout(right)
+        rlayout.setContentsMargins(0, 0, 0, 0)
+        rlayout.setSpacing(0)
+        rlayout.addWidget(self._build_header())
+
+        self.stack = QStackedWidget()
+        rlayout.addWidget(self.stack, 1)
+        root.addWidget(right, 1)
+
+        self._build_pages()
+
+    def _build_sidebar(self) -> QFrame:
+        bar = QFrame()
+        bar.setObjectName("Sidebar")
+        bar.setFixedWidth(240)
+        lay = QVBoxLayout(bar)
+        lay.setContentsMargins(14, 18, 14, 18)
+        lay.setSpacing(6)
+
+        brand = QLabel("🦷  " + config.APP_NAME)
+        brand.setObjectName("BrandTitle")
+        sub = QLabel("مدیریت کلینیک دندانپزشکی")
+        sub.setObjectName("BrandSub")
+        lay.addWidget(brand)
+        lay.addWidget(sub)
+        lay.addSpacing(16)
+
+        self._nav_group = QButtonGroup(self)
+        self._nav_group.setExclusive(True)
+
+        nav_items = [
+            ("dashboard", "🏠  داشبورد", "dashboard"),
+            ("patients", "👥  مریض‌ها", "patients"),
+            ("reports", "📊  گزارش‌ها", "reports"),
+            ("services", "💲  خدمات و قیمت‌ها", "services"),
+            ("users", "🔑  کاربران", "users"),
+            ("settings", "⚙  تنظیمات", "settings"),
+        ]
+        for key, label, cap in nav_items:
+            if not session.can(cap):
+                continue
+            btn = QPushButton(label)
+            btn.setObjectName("NavButton")
+            btn.setCheckable(True)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.clicked.connect(lambda _, k=key: self._go(k))
+            self._nav_group.addButton(btn)
+            lay.addWidget(btn)
+            self._nav_buttons[key] = btn
+
+        lay.addStretch(1)
+
+        logout_btn = QPushButton("🚪  خروج از حساب")
+        logout_btn.setObjectName("NavButton")
+        logout_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        logout_btn.clicked.connect(self._logout)
+        lay.addWidget(logout_btn)
+        return bar
+
+    def _build_header(self) -> QFrame:
+        header = QFrame()
+        header.setObjectName("Header")
+        header.setFixedHeight(64)
+        lay = QHBoxLayout(header)
+        lay.setContentsMargins(20, 0, 20, 0)
+
+        self.page_title = QLabel("داشبورد")
+        self.page_title.setObjectName("PageTitle")
+        lay.addWidget(self.page_title)
+        lay.addStretch(1)
+
+        self.clinic_name = QLabel()
+        self.clinic_name.setObjectName("ClinicName")
+        lay.addWidget(self.clinic_name)
+        lay.addSpacing(16)
+
+        user = session.current_user or {}
+        role_label = config.ROLE_LABELS.get(user.get("role"), "")
+        self.user_chip = QLabel(
+            f"👤 {user.get('full_name') or user.get('username','')} — {role_label}")
+        self.user_chip.setObjectName("UserChip")
+        lay.addWidget(self.user_chip)
+
+        self._refresh_clinic_name()
+        return header
+
+    def _build_pages(self):
+        self.pages: dict[str, QWidget] = {}
+
+        self.dashboard = DashboardPage()
+        self._add_page("dashboard", self.dashboard)
+
+        self.patients = PatientsPage()
+        self.patients.open_patient.connect(self._open_patient)
+        self._add_page("patients", self.patients)
+
+        self.patient_file = PatientFilePage()
+        self.patient_file.back.connect(lambda: self._go("patients"))
+        self.stack.addWidget(self.patient_file)  # not a nav page
+
+        if session.can("reports"):
+            self.reports = ReportsPage()
+            self._add_page("reports", self.reports)
+        if session.can("services"):
+            self.services = ServicesPage()
+            self._add_page("services", self.services)
+        if session.can("users"):
+            self.users = UsersPage()
+            self._add_page("users", self.users)
+        if session.can("settings"):
+            self.settings = SettingsPage()
+            self.settings.clinic_updated.connect(self._refresh_clinic_name)
+            self.settings.data_restored.connect(self._on_data_restored)
+            self._add_page("settings", self.settings)
+
+    def _add_page(self, key: str, widget: QWidget):
+        self.pages[key] = widget
+        self.stack.addWidget(widget)
+
+    # -- Navigation -------------------------------------------------------
+    _TITLES = {
+        "dashboard": "داشبورد",
+        "patients": "مدیریت مریض‌ها",
+        "reports": "گزارش‌ها",
+        "services": "خدمات و قیمت‌ها",
+        "users": "مدیریت کاربران",
+        "settings": "تنظیمات",
+    }
+
+    def _go(self, key: str):
+        page = self.pages.get(key)
+        if page is None:
+            return
+        if hasattr(page, "refresh"):
+            page.refresh()
+        self.stack.setCurrentWidget(page)
+        self.page_title.setText(self._TITLES.get(key, ""))
+        if key in self._nav_buttons:
+            self._nav_buttons[key].setChecked(True)
+
+    def _open_patient(self, patient_id: int):
+        self.patient_file.load_patient(patient_id)
+        self.stack.setCurrentWidget(self.patient_file)
+        self.page_title.setText("پرونده مریض")
+
+    # -- Misc -------------------------------------------------------------
+    def _refresh_clinic_name(self):
+        c = clinic_model.get()
+        self.clinic_name.setText(c.get("name") or "")
+
+    def _on_data_restored(self):
+        QMessageBox.information(
+            self, "بازیابی",
+            "اطلاعات بازیابی شد. برنامه به داشبورد بازمی‌گردد.")
+        self._refresh_clinic_name()
+        self._go("dashboard")
+
+    def _logout(self):
+        if QMessageBox.question(
+            self, "خروج", "از حساب کاربری خارج می‌شوید؟"
+        ) == QMessageBox.StandardButton.Yes:
+            session.logout()
+            if self._on_logout:
+                self._on_logout()
