@@ -12,6 +12,7 @@ from ..models import patient as patient_model
 from ..services import session
 from ..utils import helpers
 from .dialogs import PatientDialog
+from .widgets.actions import actions_cell, make_button, prepare_table
 
 
 class PatientsPage(QWidget):
@@ -47,11 +48,11 @@ class PatientsPage(QWidget):
         self.table.setHorizontalHeaderLabels([
             "کود", "نام مکمل", "تلفن", "جنسیت", "سن", "تاریخ ثبت", "عملیات"
         ])
-        self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(
             QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setAlternatingRowColors(True)
+        prepare_table(self.table)
         self.table.doubleClicked.connect(self._open_selected)
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
@@ -97,8 +98,6 @@ class PatientsPage(QWidget):
             self.table.setItem(r, 5, QTableWidgetItem(
                 helpers.jalali_date(p.get("registered_at"))))
 
-            open_btn = QPushButton("باز کردن پرونده")
-            open_btn.setObjectName("Ghost")
-            open_btn.clicked.connect(
-                lambda _, pid=p["id"]: self.open_patient.emit(pid))
-            self.table.setCellWidget(r, 6, open_btn)
+            self.table.setCellWidget(r, 6, actions_cell([
+                make_button("باز کردن پرونده", "primary", "باز کردن پرونده",
+                            lambda pid=p["id"]: self.open_patient.emit(pid))]))

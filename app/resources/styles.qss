@@ -211,6 +211,26 @@ QPushButton#IconBtn {
 }
 QPushButton#IconBtn:hover { background:#E6EDF5; }
 
+/* ---------- Table action buttons (consistent, text-based) ---------- */
+QPushButton#ActBtn, QPushButton#ActPrimary, QPushButton#ActDanger,
+QPushButton#ActSuccess, QPushButton#ActWarn {
+    border-radius: 8px;
+    padding: 7px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    min-height: 18px;
+}
+QPushButton#ActBtn { background:#EEF2F8; color:#2A3B52; border:1px solid #D4DEEA; }
+QPushButton#ActBtn:hover { background:#E1E8F1; }
+QPushButton#ActPrimary { background:#E3F6F3; color:#0A6B61; border:1px solid #A6DCD5; }
+QPushButton#ActPrimary:hover { background:#D2EFEA; }
+QPushButton#ActSuccess { background:#E7F7EE; color:#0C7A43; border:1px solid #B4E3C7; }
+QPushButton#ActSuccess:hover { background:#D6F0E1; }
+QPushButton#ActWarn { background:#FEF4E6; color:#A66617; border:1px solid #F3D9AC; }
+QPushButton#ActWarn:hover { background:#FBE9CC; }
+QPushButton#ActDanger { background:#FEF2F4; color:#B11334; border:1px solid #F6C9D2; }
+QPushButton#ActDanger:hover { background:#FBE0E5; }
+
 /* ---------------- Tables ---------------- */
 QTableWidget, QTableView {
     background-color: #ffffff;

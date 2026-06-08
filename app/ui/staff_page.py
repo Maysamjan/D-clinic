@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
 from ..models import staff as staff_model
 from ..services import session
 from ..utils import helpers, printing
+from .widgets.actions import actions_cell, make_button, prepare_table
 from .widgets.jalali_date_edit import JalaliDateEdit
 
 POSITIONS = ["داکتر", "نرس", "پذیرش", "تکنیشن", "خدمات", "محاسب", "مدیر"]
@@ -231,11 +232,13 @@ class StaffDetailDialog(QDialog):
         self.table = QTableWidget(0, 7)
         self.table.setHorizontalHeaderLabels(
             ["رسید", "تاریخ", "نوع", "دوره", "مبلغ", "روش", "عملیات"])
-        self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setAlternatingRowColors(True)
+        prepare_table(self.table)
         self.table.horizontalHeader().setSectionResizeMode(
             3, QHeaderView.ResizeMode.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(
+            6, QHeaderView.ResizeMode.ResizeToContents)
         layout.addWidget(self.table, 1)
 
         close_btn = QPushButton("بستن")
@@ -281,19 +284,12 @@ class StaffDetailDialog(QDialog):
             method = {"cash": "نقدی", "bank": "بانکی"}.get(
                 p.get("method"), p.get("method", ""))
             self.table.setItem(r, 5, QTableWidgetItem(method))
-            actions = QWidget()
-            al = QHBoxLayout(actions)
-            al.setContentsMargins(2, 2, 2, 2)
-            pr = QPushButton("🖨")
-            pr.setObjectName("IconBtn")
-            pr.clicked.connect(lambda _, pid=p["id"]: self._print_receipt(pid))
-            al.addWidget(pr)
-            dl = QPushButton("🗑")
-            dl.setObjectName("Danger")
-            dl.setFixedWidth(40)
-            dl.clicked.connect(lambda _, pid=p["id"]: self._delete_payment(pid))
-            al.addWidget(dl)
-            self.table.setCellWidget(r, 6, actions)
+            self.table.setCellWidget(r, 6, actions_cell([
+                make_button("چاپ رسید", "primary", "چاپ رسید",
+                            lambda pid=p["id"]: self._print_receipt(pid)),
+                make_button("حذف", "danger", "حذف",
+                            lambda pid=p["id"]: self._delete_payment(pid)),
+            ]))
 
     def _delete_payment(self, pid):
         if QMessageBox.question(
@@ -329,11 +325,11 @@ class StaffPage(QWidget):
         self.table.setHorizontalHeaderLabels([
             "نام", "وظیفه", "نوع پرداخت", "فیصدی کسب‌شده",
             "پرداخت‌شده", "باقیمانده", "وضعیت", "عملیات"])
-        self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(
             QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setAlternatingRowColors(True)
+        prepare_table(self.table)
         self.table.doubleClicked.connect(self._open_selected)
         h = self.table.horizontalHeader()
         h.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
@@ -390,21 +386,11 @@ class StaffPage(QWidget):
             self.table.setItem(r, 6, QTableWidgetItem(
                 "فعال" if m.get("is_active") else "غیرفعال"))
 
-            actions = QWidget()
-            al = QHBoxLayout(actions)
-            al.setContentsMargins(2, 2, 2, 2)
-            al.setSpacing(4)
-            acc = QPushButton("حساب")
-            acc.setObjectName("Ghost")
-            acc.clicked.connect(lambda _, sid=m["id"]: self._open_detail(sid))
-            edit = QPushButton("✎")
-            edit.setObjectName("IconBtn")
-            edit.clicked.connect(lambda _, mm=m: self._edit_staff(mm))
-            dl = QPushButton("🗑")
-            dl.setObjectName("Danger")
-            dl.setFixedWidth(40)
-            dl.clicked.connect(lambda _, mm=m: self._delete_staff(mm))
-            al.addWidget(acc)
-            al.addWidget(edit)
-            al.addWidget(dl)
-            self.table.setCellWidget(r, 7, actions)
+            self.table.setCellWidget(r, 7, actions_cell([
+                make_button("حساب", "primary", "مشاهده حساب و ثبت پرداخت",
+                            lambda sid=m["id"]: self._open_detail(sid)),
+                make_button("ویرایش", "default", "ویرایش",
+                            lambda mm=m: self._edit_staff(mm)),
+                make_button("حذف", "danger", "حذف",
+                            lambda mm=m: self._delete_staff(mm)),
+            ]))

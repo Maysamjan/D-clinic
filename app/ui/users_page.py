@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
 from .. import config
 from ..models import user as user_model
 from ..services import session
+from .widgets.actions import actions_cell, make_button, prepare_table
 
 
 class UserDialog(QDialog):
@@ -102,11 +103,13 @@ class UsersPage(QWidget):
         self.table = QTableWidget(0, 5)
         self.table.setHorizontalHeaderLabels([
             "نام کاربری", "نام مکمل", "نقش", "وضعیت", "عملیات"])
-        self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setAlternatingRowColors(True)
+        prepare_table(self.table)
         self.table.horizontalHeader().setSectionResizeMode(
             1, QHeaderView.ResizeMode.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(
+            4, QHeaderView.ResizeMode.ResizeToContents)
         layout.addWidget(self.table)
 
     def _add_user(self):
@@ -143,17 +146,9 @@ class UsersPage(QWidget):
                 config.ROLE_LABELS.get(u.get("role"), u.get("role", ""))))
             self.table.setItem(r, 3, QTableWidgetItem(
                 "فعال" if u.get("is_active") else "غیرفعال"))
-            actions = QWidget()
-            al = QHBoxLayout(actions)
-            al.setContentsMargins(2, 2, 2, 2)
-            edit_btn = QPushButton("✎")
-            edit_btn.setObjectName("Secondary")
-            edit_btn.setFixedWidth(40)
-            edit_btn.clicked.connect(lambda _, uu=u: self._edit_user(uu))
-            del_btn = QPushButton("🗑")
-            del_btn.setObjectName("Danger")
-            del_btn.setFixedWidth(40)
-            del_btn.clicked.connect(lambda _, uu=u: self._delete_user(uu))
-            al.addWidget(edit_btn)
-            al.addWidget(del_btn)
-            self.table.setCellWidget(r, 4, actions)
+            self.table.setCellWidget(r, 4, actions_cell([
+                make_button("ویرایش", "default", "ویرایش کاربر",
+                            lambda uu=u: self._edit_user(uu)),
+                make_button("حذف", "danger", "حذف کاربر",
+                            lambda uu=u: self._delete_user(uu)),
+            ]))

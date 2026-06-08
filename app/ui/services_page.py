@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
 from ..models import service_price as service_model
 from ..models import treatment as treatment_model
 from ..utils import helpers
+from .widgets.actions import actions_cell, make_button, prepare_table
 
 
 class _PriceDialog(QDialog):
@@ -137,27 +138,19 @@ class ServicesPage(QWidget):
 
     # -- Helpers ----------------------------------------------------------
     def _setup_table(self, table):
-        table.verticalHeader().setVisible(False)
         table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         table.setAlternatingRowColors(True)
+        prepare_table(table)
         table.horizontalHeader().setSectionResizeMode(
             0, QHeaderView.ResizeMode.Stretch)
+        table.horizontalHeader().setSectionResizeMode(
+            3, QHeaderView.ResizeMode.ResizeToContents)
 
     def _row_actions(self, edit_cb, del_cb):
-        w = QWidget()
-        lay = QHBoxLayout(w)
-        lay.setContentsMargins(2, 2, 2, 2)
-        edit_btn = QPushButton("✎")
-        edit_btn.setObjectName("Secondary")
-        edit_btn.setFixedWidth(40)
-        edit_btn.clicked.connect(edit_cb)
-        del_btn = QPushButton("🗑")
-        del_btn.setObjectName("Danger")
-        del_btn.setFixedWidth(40)
-        del_btn.clicked.connect(del_cb)
-        lay.addWidget(edit_btn)
-        lay.addWidget(del_btn)
-        return w
+        return actions_cell([
+            make_button("ویرایش", "default", "ویرایش", lambda: edit_cb(None)),
+            make_button("حذف", "danger", "حذف", lambda: del_cb(None)),
+        ])
 
     def refresh(self):
         self.services_table.setRowCount(0)

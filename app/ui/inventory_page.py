@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
 from ..models import inventory as inv_model
 from ..services import session
 from ..utils import helpers
+from .widgets.actions import actions_cell, make_button, prepare_table
 from .widgets.jalali_date_edit import JalaliDateEdit
 
 UNITS = ["عدد", "بسته", "قطی", "بوتل", "میلی‌لیتر", "گرام", "کیلوگرام", "متر"]
@@ -233,18 +234,19 @@ class InventoryPage(QWidget):
         self.count_label.setObjectName("SectionHint")
         layout.addWidget(self.count_label)
 
-        self.table = QTableWidget(0, 9)
+        self.table = QTableWidget(0, 8)
         self.table.setHorizontalHeaderLabels([
-            "نام", "دسته", "موجودی", "واحد", "حداقل", "قیمت فی واحد",
+            "نام", "دسته", "موجودی", "حداقل", "قیمت فی واحد",
             "ارزش کل", "تاریخ انقضا", "عملیات"])
-        self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(
             QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setAlternatingRowColors(True)
+        prepare_table(self.table)
         h = self.table.horizontalHeader()
         h.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        h.setSectionResizeMode(8, QHeaderView.ResizeMode.ResizeToContents)
+        h.setMinimumSectionSize(72)
+        h.setSectionResizeMode(7, QHeaderView.ResizeMode.ResizeToContents)
         layout.addWidget(self.table)
 
     # -- actions ----------------------------------------------------------
@@ -289,56 +291,40 @@ class InventoryPage(QWidget):
             self.table.setItem(r, 0, name_item)
             self.table.setItem(r, 1, QTableWidgetItem(
                 inv_model.CATEGORIES.get(it.get("category"), "")))
-            qty_item = QTableWidgetItem(helpers.jalali_digits(
-                _num(it.get("quantity"))))
+            qty_text = (helpers.jalali_digits(_num(it.get("quantity")))
+                        + " " + (it.get("unit") or ""))
             low = (it.get("min_quantity") or 0) > 0 and \
                 float(it.get("quantity") or 0) <= float(it.get("min_quantity"))
             if low:
+                qty_text += "  ⚠"
+            qty_item = QTableWidgetItem(qty_text)
+            if low:
                 qty_item.setForeground(QColor("#E11D48"))
-                qty_item.setText(qty_item.text() + "  ⚠")
             self.table.setItem(r, 2, qty_item)
-            self.table.setItem(r, 3, QTableWidgetItem(it.get("unit", "")))
-            self.table.setItem(r, 4, QTableWidgetItem(
+            self.table.setItem(r, 3, QTableWidgetItem(
                 helpers.jalali_digits(_num(it.get("min_quantity")))))
-            self.table.setItem(r, 5, QTableWidgetItem(
+            self.table.setItem(r, 4, QTableWidgetItem(
                 helpers.format_money(it.get("unit_price", 0))))
-            self.table.setItem(r, 6, QTableWidgetItem(helpers.format_money(
+            self.table.setItem(r, 5, QTableWidgetItem(helpers.format_money(
                 float(it.get("quantity") or 0) * float(it.get("unit_price") or 0))))
             exp = it.get("expiry_date")
             exp_item = QTableWidgetItem(helpers.jalali_date(exp) if exp else "—")
             if exp and exp <= today:
                 exp_item.setForeground(QColor("#E11D48"))
-            self.table.setItem(r, 7, exp_item)
-            self.table.setCellWidget(r, 8, self._actions(it))
+            self.table.setItem(r, 6, exp_item)
+            self.table.setCellWidget(r, 7, self._actions(it))
 
     def _actions(self, it):
-        w = QWidget()
-        lay = QHBoxLayout(w)
-        lay.setContentsMargins(2, 2, 2, 2)
-        lay.setSpacing(4)
-        in_btn = QPushButton("＋")
-        in_btn.setObjectName("Success")
-        in_btn.setFixedWidth(38)
-        in_btn.setToolTip("ورود به گدام")
-        in_btn.clicked.connect(lambda _, x=it: self._stock(x, "in"))
-        out_btn = QPushButton("－")
-        out_btn.setObjectName("Ghost")
-        out_btn.setFixedWidth(38)
-        out_btn.setToolTip("خروج از گدام")
-        out_btn.clicked.connect(lambda _, x=it: self._stock(x, "out"))
-        edit_btn = QPushButton("✎")
-        edit_btn.setObjectName("IconBtn")
-        edit_btn.setFixedWidth(38)
-        edit_btn.setToolTip("ویرایش")
-        edit_btn.clicked.connect(lambda _, x=it: self._edit_item(x))
-        del_btn = QPushButton("🗑")
-        del_btn.setObjectName("Danger")
-        del_btn.setFixedWidth(38)
-        del_btn.setToolTip("حذف")
-        del_btn.clicked.connect(lambda _, x=it: self._delete_item(x))
-        for b in (in_btn, out_btn, edit_btn, del_btn):
-            lay.addWidget(b)
-        return w
+        return actions_cell([
+            make_button("ورود", "success", "ورود به گدام",
+                        lambda x=it: self._stock(x, "in")),
+            make_button("خروج", "warn", "خروج از گدام",
+                        lambda x=it: self._stock(x, "out")),
+            make_button("ویرایش", "default", "ویرایش قلم",
+                        lambda x=it: self._edit_item(x)),
+            make_button("حذف", "danger", "حذف قلم",
+                        lambda x=it: self._delete_item(x)),
+        ])
 
     def _refresh_alerts(self):
         low = inv_model.low_stock()

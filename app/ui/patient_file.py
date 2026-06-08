@@ -24,6 +24,7 @@ from ..services import session
 from ..utils import helpers, printing
 from .dialogs import PatientDialog, PaymentDialog, VisitDialog
 from .invoice_dialog import InvoiceDialog
+from .widgets.actions import actions_cell, make_button, prepare_table
 from .widgets.timeline import TimelineWidget
 
 
@@ -174,7 +175,7 @@ class PatientFilePage(QWidget):
         self.visits_table = QTableWidget(0, 7)
         self.visits_table.setHorizontalHeaderLabels([
             "تاریخ", "معالجه", "دندان", "داکتر", "هزینه", "یادداشت", "عملیات"])
-        self.visits_table.verticalHeader().setVisible(False)
+        prepare_table(self.visits_table)
         self.visits_table.setEditTriggers(
             QAbstractItemView.EditTrigger.NoEditTriggers)
         self.visits_table.setSelectionBehavior(
@@ -200,7 +201,7 @@ class PatientFilePage(QWidget):
         self.payments_table = QTableWidget(0, 5)
         self.payments_table.setHorizontalHeaderLabels([
             "تاریخ", "مبلغ", "روش", "یادداشت", "عملیات"])
-        self.payments_table.verticalHeader().setVisible(False)
+        prepare_table(self.payments_table)
         self.payments_table.setEditTriggers(
             QAbstractItemView.EditTrigger.NoEditTriggers)
         self.payments_table.setAlternatingRowColors(True)
@@ -223,7 +224,7 @@ class PatientFilePage(QWidget):
         self.invoices_table = QTableWidget(0, 6)
         self.invoices_table.setHorizontalHeaderLabels([
             "شماره", "تاریخ", "مجموع", "پرداخت", "باقیمانده", "عملیات"])
-        self.invoices_table.verticalHeader().setVisible(False)
+        prepare_table(self.invoices_table)
         self.invoices_table.setEditTriggers(
             QAbstractItemView.EditTrigger.NoEditTriggers)
         self.invoices_table.setAlternatingRowColors(True)
@@ -240,7 +241,7 @@ class PatientFilePage(QWidget):
         lay.addWidget(info)
         self.files_table = QTableWidget(0, 4)
         self.files_table.setHorizontalHeaderLabels(["نام فایل", "نوع", "تاریخ", "عملیات"])
-        self.files_table.verticalHeader().setVisible(False)
+        prepare_table(self.files_table)
         self.files_table.setEditTriggers(
             QAbstractItemView.EditTrigger.NoEditTriggers)
         self.files_table.setAlternatingRowColors(True)
@@ -316,29 +317,15 @@ class PatientFilePage(QWidget):
             self.visits_table.setCellWidget(r, 6, self._visit_actions(v))
 
     def _visit_actions(self, v) -> QWidget:
-        w = QWidget()
-        lay = QHBoxLayout(w)
-        lay.setContentsMargins(2, 2, 2, 2)
-        lay.setSpacing(4)
-        print_btn = QPushButton("🖨")
-        print_btn.setObjectName("Secondary")
-        print_btn.setFixedWidth(36)
-        print_btn.setToolTip("چاپ ویزیت")
-        print_btn.clicked.connect(lambda _, vid=v["id"]: self._print_visit(vid))
-        lay.addWidget(print_btn)
+        buttons = [make_button("چاپ", "primary", "چاپ ویزیت",
+                               lambda vid=v["id"]: self._print_visit(vid))]
         if session.can("visit_add"):
-            edit_btn = QPushButton("✎")
-            edit_btn.setObjectName("Secondary")
-            edit_btn.setFixedWidth(36)
-            edit_btn.clicked.connect(lambda _, vv=v: self._edit_visit(vv))
-            lay.addWidget(edit_btn)
+            buttons.append(make_button("ویرایش", "default", "ویرایش ویزیت",
+                                       lambda vv=v: self._edit_visit(vv)))
         if session.is_admin():
-            del_btn = QPushButton("🗑")
-            del_btn.setObjectName("Danger")
-            del_btn.setFixedWidth(36)
-            del_btn.clicked.connect(lambda _, vid=v["id"]: self._delete_visit(vid))
-            lay.addWidget(del_btn)
-        return w
+            buttons.append(make_button("حذف", "danger", "حذف ویزیت",
+                                       lambda vid=v["id"]: self._delete_visit(vid)))
+        return actions_cell(buttons)
 
     def _fill_payments(self):
         self.payments_table.setRowCount(0)
@@ -354,11 +341,9 @@ class PatientFilePage(QWidget):
             self.payments_table.setItem(r, 2, QTableWidgetItem(method))
             self.payments_table.setItem(r, 3, QTableWidgetItem(pay.get("notes") or ""))
             if session.is_admin():
-                del_btn = QPushButton("🗑")
-                del_btn.setObjectName("Danger")
-                del_btn.clicked.connect(
-                    lambda _, pid=pay["id"]: self._delete_payment(pid))
-                self.payments_table.setCellWidget(r, 4, del_btn)
+                self.payments_table.setCellWidget(r, 4, actions_cell([
+                    make_button("حذف", "danger", "حذف پرداخت",
+                                lambda pid=pay["id"]: self._delete_payment(pid))]))
 
     def _fill_invoices(self):
         self.invoices_table.setRowCount(0)
@@ -376,11 +361,9 @@ class PatientFilePage(QWidget):
             bal = float(inv.get("total", 0)) - float(inv.get("paid", 0))
             self.invoices_table.setItem(r, 4, QTableWidgetItem(
                 helpers.format_money(bal)))
-            print_btn = QPushButton("🖨 چاپ")
-            print_btn.setObjectName("Ghost")
-            print_btn.clicked.connect(
-                lambda _, iid=inv["id"]: self._print_invoice(iid))
-            self.invoices_table.setCellWidget(r, 5, print_btn)
+            self.invoices_table.setCellWidget(r, 5, actions_cell([
+                make_button("چاپ صورتحساب", "primary", "چاپ صورتحساب",
+                            lambda iid=inv["id"]: self._print_invoice(iid))]))
 
     def _fill_files(self):
         self.files_table.setRowCount(0)
@@ -394,11 +377,9 @@ class PatientFilePage(QWidget):
             self.files_table.setItem(r, 1, QTableWidgetItem(ftype))
             self.files_table.setItem(r, 2, QTableWidgetItem(
                 helpers.jalali_date(a.get("created_at"))))
-            open_btn = QPushButton("باز کردن")
-            open_btn.setObjectName("Ghost")
-            open_btn.clicked.connect(
-                lambda _, path=a.get("file_path"): self._open_file(path))
-            self.files_table.setCellWidget(r, 3, open_btn)
+            self.files_table.setCellWidget(r, 3, actions_cell([
+                make_button("باز کردن", "primary", "باز کردن فایل",
+                            lambda path=a.get("file_path"): self._open_file(path))]))
 
     # -- Actions ----------------------------------------------------------
     def _edit_patient(self):
