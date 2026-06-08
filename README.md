@@ -17,6 +17,7 @@ consistent professional teal theme and the bundled high-quality
 |---|---|
 | 🔐 **Login & Users** | Three roles — Admin, Doctor, Receptionist — with role-based permissions |
 | 🩺 **Staff & Payroll** | Register doctors & employees; track salary / commission earned from treatments; record payouts and **print payment receipts** |
+| 📦 **Inventory / Store** | Register medicines, equipment and consumables; stock-in / stock-out movements; low-stock and expiry alerts; total store value |
 | 👥 **Patients** | One permanent file per patient, auto patient code, fast search by name / phone / code |
 | 📋 **Timeline** | Social-media style chronological timeline of every visit & treatment |
 | 🦷 **Visits / Treatments** | Date, doctor, treatment type, tooth, notes, cost — admin-extendable treatment types |
@@ -96,8 +97,8 @@ D-clinic/
 
 `clinics`, `users`, `staff`, `staff_payments`, `patients`, `treatments`,
 `service_prices`, `visits`, `attachments`, `payments`, `invoices`,
-`invoice_items`, `backups` — all with proper foreign-key relationships and
-indexes for fast search.
+`invoice_items`, `inventory_items`, `inventory_movements`, `backups` — all
+with proper foreign-key relationships and indexes for fast search.
 
 ---
 

@@ -176,6 +176,38 @@ CREATE TABLE IF NOT EXISTS staff_payments (
 );
 CREATE INDEX IF NOT EXISTS idx_staffpay_staff ON staff_payments(staff_id);
 
+-- Inventory / store room (medicines, equipment, consumables) -------------
+CREATE TABLE IF NOT EXISTS inventory_items (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    name          TEXT NOT NULL,
+    category      TEXT DEFAULT 'medicine',   -- medicine | equipment | consumable
+    unit          TEXT DEFAULT 'عدد',        -- عدد / بسته / میلی‌لیتر ...
+    quantity      REAL NOT NULL DEFAULT 0,
+    min_quantity  REAL NOT NULL DEFAULT 0,   -- reorder level
+    unit_price    REAL NOT NULL DEFAULT 0,
+    supplier      TEXT DEFAULT '',
+    expiry_date   TEXT,                       -- ISO date (medicines), nullable
+    notes         TEXT DEFAULT '',
+    is_active     INTEGER NOT NULL DEFAULT 1,
+    created_at    TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_inv_name ON inventory_items(name);
+CREATE INDEX IF NOT EXISTS idx_inv_cat ON inventory_items(category);
+
+-- Stock movements (in / out) ---------------------------------------------
+CREATE TABLE IF NOT EXISTS inventory_movements (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    item_id       INTEGER NOT NULL,
+    change        REAL NOT NULL DEFAULT 0,    -- positive = in, negative = out
+    reason        TEXT DEFAULT 'purchase',    -- purchase | use | adjust | expire
+    note          TEXT DEFAULT '',
+    movement_date TEXT NOT NULL DEFAULT (date('now')),
+    created_by    INTEGER,
+    created_at    TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (item_id) REFERENCES inventory_items(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_invmov_item ON inventory_movements(item_id);
+
 -- Backup history ----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS backups (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,

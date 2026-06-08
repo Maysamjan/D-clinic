@@ -12,6 +12,7 @@ from .. import config
 from ..models import clinic as clinic_model
 from ..services import session
 from .dashboard import DashboardPage
+from .inventory_page import InventoryPage
 from .patient_file import PatientFilePage
 from .patients_page import PatientsPage
 from .reports_page import ReportsPage
@@ -82,6 +83,7 @@ class MainWindow(QMainWindow):
             ("dashboard", "🏠  داشبورد", "dashboard"),
             ("patients", "👥  مریض‌ها", "patients"),
             ("staff", "🩺  داکتران و کارمندان", "staff"),
+            ("inventory", "📦  گدام و انبار", "inventory"),
             ("reports", "📊  گزارش‌ها", "reports"),
             ("services", "💲  خدمات و قیمت‌ها", "services"),
             ("users", "🔑  کاربران", "users"),
@@ -158,6 +160,9 @@ class MainWindow(QMainWindow):
         if session.can("staff"):
             self.staff = StaffPage()
             self._add_page("staff", self.staff)
+        if session.can("inventory"):
+            self.inventory = InventoryPage()
+            self._add_page("inventory", self.inventory)
         if session.can("reports"):
             self.reports = ReportsPage()
             self._add_page("reports", self.reports)
@@ -182,6 +187,7 @@ class MainWindow(QMainWindow):
         "dashboard": "داشبورد",
         "patients": "مدیریت مریض‌ها",
         "staff": "داکتران و کارمندان",
+        "inventory": "گدام و انبار",
         "reports": "گزارش‌ها",
         "services": "خدمات و قیمت‌ها",
         "users": "مدیریت کاربران",

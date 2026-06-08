@@ -124,7 +124,7 @@ def _header(doc_title: str, doc_no: str = "", doc_date: str = "") -> str:
 
     if not doc_date:
         doc_date = helpers.jalali_date(datetime.date.today().isoformat())
-    no_html = (f"<div class='dno'>شماره: {helpers.jalali_digits(doc_no)}</div>"
+    no_html = (f" &nbsp;|&nbsp; <span class='dno'>شماره: {helpers.jalali_digits(doc_no)}</span>"
                if doc_no else "")
 
     logo = _logo_tag()
@@ -139,14 +139,17 @@ def _header(doc_title: str, doc_no: str = "", doc_date: str = "") -> str:
           <div class='cname'>{c.get('name') or 'کلینیک دندانپزشکی'}</div>
           <div class='cmeta'>{meta_html}</div>
         </td>
-        <td valign='middle' align='left'>
-          <div class='dtitle'>{doc_title}</div>
-          <div class='dsub'>تاریخ: {doc_date}</div>
-          {no_html}
-        </td>
       </tr>
     </table>
     <hr color='#0E9F8E' size='3'>
+    <table width='100%' cellspacing='0' cellpadding='0'>
+      <tr><td align='right'>
+        <span class='dtitle'>{doc_title}</span>
+        &nbsp;&nbsp;&nbsp;
+        <span class='dsub'>تاریخ: {doc_date}</span>{no_html}
+      </td></tr>
+    </table>
+    <div style='height:8pt;'></div>
     """
 
 
@@ -156,16 +159,9 @@ def _section(title: str) -> str:
             f"<div style='height:5pt;'></div>")
 
 
-def _footer() -> str:
-    today = helpers.jalali_date(datetime.date.today().isoformat())
-    return (f"<br><hr color='#D8E0E9' size='1'>"
-            f"<div class='footer' align='center'>چاپ شده در {today} — "
-            f"سیستم مدیریت کلینیک دندانپزشکی D-Clinic</div>")
-
-
 def _wrap(body: str) -> str:
     return (f"<html dir='rtl'><head>{_CSS}</head>"
-            f"<body>{body}{_footer()}</body></html>")
+            f"<body>{body}</body></html>")
 
 
 def _grid(headers: list[str], rows: list[list[str]], widths=None) -> str:
@@ -304,11 +300,11 @@ def invoice_html(invoice_id: int) -> str:
         ["#", "شرح خدمات", "مبلغ"], rows, widths=[46, None, 150])
     body += f"""
     <div style='height:9pt;'></div>
-    <table width='320' cellspacing='0' cellpadding='0' align='left'
+    <table width='320' cellspacing='0' cellpadding='0' align='right'
            style='background-color:#F4F8F7;'>
-      <tr><td class='tk' align='left'>مجموع: &nbsp;&nbsp;<span class='tv'>{helpers.format_money(inv['total'])}</span></td></tr>
-      <tr><td class='tk' align='left'>پرداخت شده: &nbsp;&nbsp;<span class='tv'>{helpers.format_money(inv['paid'])}</span></td></tr>
-      <tr><td align='left' class='grand' style='padding:6pt 8pt;'>باقیمانده: &nbsp;&nbsp;{helpers.format_money(balance)}</td></tr>
+      <tr><td class='tk' align='right'>مجموع: &nbsp;&nbsp;<span class='tv'>{helpers.format_money(inv['total'])}</span></td></tr>
+      <tr><td class='tk' align='right'>پرداخت شده: &nbsp;&nbsp;<span class='tv'>{helpers.format_money(inv['paid'])}</span></td></tr>
+      <tr><td align='right' class='grand' style='padding:6pt 8pt;'>باقیمانده: &nbsp;&nbsp;{helpers.format_money(balance)}</td></tr>
     </table>
     <div style='clear:both;'></div><br><br>
     """

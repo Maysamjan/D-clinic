@@ -45,14 +45,14 @@ _CAPABILITIES = {
         "dashboard", "patients", "patient_add", "patient_edit", "patient_delete",
         "visits", "visit_add", "payments", "payment_add", "invoices",
         "reports", "settings", "users", "services", "treatments_manage",
-        "staff", "backup",
+        "staff", "inventory", "backup",
     },
     config.ROLE_DOCTOR: {
-        "dashboard", "patients", "visits", "visit_add", "reports",
+        "dashboard", "patients", "visits", "visit_add", "reports", "inventory",
     },
     config.ROLE_RECEPTIONIST: {
         "dashboard", "patients", "patient_add", "patient_edit",
-        "visits", "payments", "payment_add", "invoices",
+        "visits", "payments", "payment_add", "invoices", "inventory",
     },
 }
 
