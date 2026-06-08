@@ -34,7 +34,8 @@ class LoginWindow(QWidget):
         # Left branding panel
         brand = QFrame()
         brand.setStyleSheet(
-            "background-color: #0f2942;"
+            "background: qlineargradient(x1:0, y1:0, x2:1, y2:1,"
+            " stop:0 #0C2A33, stop:1 #11A593);"
         )
         bl = QVBoxLayout(brand)
         bl.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -46,10 +47,10 @@ class LoginWindow(QWidget):
         name.setStyleSheet("color:#ffffff; font-size:40px; font-weight:bold;")
         name.setAlignment(Qt.AlignmentFlag.AlignCenter)
         sub = QLabel(config.APP_TITLE)
-        sub.setStyleSheet("color:#8fb0cc; font-size:16px;")
+        sub.setStyleSheet("color:#CFEFEA; font-size:16px;")
         sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
         tag = QLabel("نرم‌افزار مدیریت کلینیک دندانپزشکی — افغانستان")
-        tag.setStyleSheet("color:#5d7d99; font-size:13px; margin-top:20px;")
+        tag.setStyleSheet("color:#9FD8D1; font-size:13px; margin-top:20px;")
         tag.setAlignment(Qt.AlignmentFlag.AlignCenter)
         bl.addWidget(logo)
         bl.addWidget(name)
@@ -92,7 +93,13 @@ class LoginWindow(QWidget):
         self.password.setMinimumHeight(42)
 
         login_btn = QPushButton("ورود")
-        login_btn.setMinimumHeight(44)
+        login_btn.setMinimumHeight(46)
+        login_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        login_btn.setStyleSheet(
+            "QPushButton { background-color:#0E9F8E; color:#ffffff; border:none;"
+            " border-radius:10px; font-weight:700; font-size:16px; }"
+            "QPushButton:hover { background-color:#0C8E7F; }"
+            "QPushButton:pressed { background-color:#0A7A6D; }")
         login_btn.clicked.connect(self._attempt_login)
 
         self.username.returnPressed.connect(self.password.setFocus)
@@ -107,6 +114,12 @@ class LoginWindow(QWidget):
         cl.addWidget(self.password)
         cl.addSpacing(8)
         cl.addWidget(login_btn)
+
+        hint2 = QLabel("ورود پیش‌فرض مدیر:  admin / admin")
+        hint2.setObjectName("LoginHint")
+        hint2.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        cl.addSpacing(4)
+        cl.addWidget(hint2)
 
         rl.addWidget(card, 0, Qt.AlignmentFlag.AlignCenter)
 

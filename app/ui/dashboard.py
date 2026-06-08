@@ -22,20 +22,20 @@ class DashboardPage(QScrollArea):
         container = QWidget()
         self.setWidget(container)
         self.root = QVBoxLayout(container)
-        self.root.setContentsMargins(20, 20, 20, 20)
-        self.root.setSpacing(18)
+        self.root.setContentsMargins(26, 24, 26, 24)
+        self.root.setSpacing(20)
         self._build()
 
     def _build(self):
         # Stat cards grid
         self.cards_grid = QGridLayout()
         self.cards_grid.setSpacing(14)
-        self.card_today = StatCard("مریض‌های امروز", "۰", "👥", "#2563eb")
-        self.card_total = StatCard("مجموع مریض‌ها", "۰", "🗂", "#7c3aed")
-        self.card_today_rev = StatCard("درآمد امروز", "۰", "💵", "#16a34a")
-        self.card_month_rev = StatCard("درآمد این ماه", "۰", "📈", "#0891b2")
-        self.card_outstanding = StatCard("مطالبات معوقه", "۰", "⚠", "#dc2626")
-        self.card_new_today = StatCard("ثبت‌نام امروز", "۰", "🆕", "#ea580c")
+        self.card_today = StatCard("مریض‌های امروز", "۰", "👥", "#0E9F8E")
+        self.card_total = StatCard("مجموع مریض‌ها", "۰", "🗂", "#6366F1")
+        self.card_today_rev = StatCard("درآمد امروز", "۰", "💵", "#10A05B")
+        self.card_month_rev = StatCard("درآمد این ماه", "۰", "📈", "#0891B2")
+        self.card_outstanding = StatCard("مطالبات معوقه", "۰", "⚠", "#E23D5B")
+        self.card_new_today = StatCard("ثبت‌نام امروز", "۰", "🆕", "#E0962A")
 
         for i, card in enumerate([
             self.card_today, self.card_new_today, self.card_total,
@@ -47,14 +47,14 @@ class DashboardPage(QScrollArea):
         # Charts row 1
         row1 = QHBoxLayout()
         row1.setSpacing(14)
-        self.revenue_chart = LineChart(color=QColor("#16a34a"))
+        self.revenue_chart = LineChart(color=QColor("#0E9F8E"))
         row1.addWidget(self._chart_card("درآمد ماهانه", self.revenue_chart), 1)
-        self.growth_chart = BarChart(color=QColor("#2563eb"))
+        self.growth_chart = BarChart(color=QColor("#0891B2"))
         row1.addWidget(self._chart_card("رشد مریض‌ها", self.growth_chart), 1)
         self.root.addLayout(row1)
 
         # Charts row 2
-        self.treatments_chart = HBarChart(color=QColor("#7c3aed"))
+        self.treatments_chart = HBarChart(color=QColor("#6366F1"))
         self.root.addWidget(self._chart_card(
             "رایج‌ترین معالجات", self.treatments_chart))
 

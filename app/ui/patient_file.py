@@ -48,8 +48,8 @@ class PatientFilePage(QWidget):
         super().__init__(parent)
         self.patient_id: int | None = None
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 16, 20, 16)
-        layout.setSpacing(14)
+        layout.setContentsMargins(26, 20, 26, 20)
+        layout.setSpacing(16)
 
         # Top bar: back + name + actions
         top = QHBoxLayout()
@@ -466,16 +466,4 @@ class PatientFilePage(QWidget):
         self._print_or_pdf(html, "صورتحساب")
 
     def _print_or_pdf(self, html, title):
-        box = QMessageBox(self)
-        box.setWindowTitle(title)
-        box.setText("چاپ یا ذخیره به صورت PDF؟")
-        print_b = box.addButton("🖨 چاپ", QMessageBox.ButtonRole.AcceptRole)
-        pdf_b = box.addButton("📄 PDF", QMessageBox.ButtonRole.ActionRole)
-        box.addButton("لغو", QMessageBox.ButtonRole.RejectRole)
-        box.exec()
-        if box.clickedButton() == print_b:
-            printing.print_html(html, self, title)
-        elif box.clickedButton() == pdf_b:
-            path = printing.export_pdf(html, self, f"{title}.pdf")
-            if path:
-                QMessageBox.information(self, "ذخیره شد", "فایل PDF ذخیره شد:\n" + path)
+        printing.print_or_pdf(self, html, title)

@@ -36,13 +36,13 @@ class ReportsPage(QScrollArea):
         header.addWidget(self.range_combo)
         root.addLayout(header)
 
-        self.revenue_chart = LineChart(color=QColor("#16a34a"))
+        self.revenue_chart = LineChart(color=QColor("#0E9F8E"))
         root.addWidget(self._card("درآمد ماهانه", self.revenue_chart))
 
-        self.growth_chart = BarChart(color=QColor("#2563eb"))
+        self.growth_chart = BarChart(color=QColor("#0891B2"))
         root.addWidget(self._card("رشد مریض‌ها (ثبت‌نام ماهانه)", self.growth_chart))
 
-        self.treatments_chart = HBarChart(color=QColor("#7c3aed"))
+        self.treatments_chart = HBarChart(color=QColor("#6366F1"))
         root.addWidget(self._card("رایج‌ترین معالجات", self.treatments_chart))
 
         root.addStretch(1)

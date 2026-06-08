@@ -2,7 +2,9 @@
 
 A complete **offline desktop** dental clinic management system built for
 dental clinics in Afghanistan. Built with **Python + PyQt6 + SQLite**, with
-full **Persian/Dari RTL** support and the **Jalali (Solar Hijri) calendar**.
+full **Persian/Dari RTL** support, the **Jalali (Solar Hijri) calendar**, a
+consistent professional teal theme and the bundled high-quality
+**Vazirmatn** font (in `assets/fonts`).
 
 > نرم‌افزار رومیزی مدیریت کلینیک دندانپزشکی — کاملاً آفلاین، با پشتیبانی کامل
 > از زبان فارسی/دری و تقویم هجری شمسی.
@@ -14,6 +16,7 @@ full **Persian/Dari RTL** support and the **Jalali (Solar Hijri) calendar**.
 | Module | Description |
 |---|---|
 | 🔐 **Login & Users** | Three roles — Admin, Doctor, Receptionist — with role-based permissions |
+| 🩺 **Staff & Payroll** | Register doctors & employees; track salary / commission earned from treatments; record payouts and **print payment receipts** |
 | 👥 **Patients** | One permanent file per patient, auto patient code, fast search by name / phone / code |
 | 📋 **Timeline** | Social-media style chronological timeline of every visit & treatment |
 | 🦷 **Visits / Treatments** | Date, doctor, treatment type, tooth, notes, cost — admin-extendable treatment types |
@@ -59,7 +62,8 @@ python main.py
 ```bash
 pip install pyinstaller
 pyinstaller --noconfirm --windowed --name D-Clinic ^
-    --add-data "app/resources/styles.qss;app/resources" main.py
+    --add-data "app/resources/styles.qss;app/resources" ^
+    --add-data "assets;assets" main.py
 ```
 
 The resulting `dist/D-Clinic/D-Clinic.exe` is fully portable. Application
@@ -90,9 +94,10 @@ D-clinic/
 
 ## 🗄 Database Schema
 
-`clinics`, `users`, `patients`, `treatments`, `service_prices`, `visits`,
-`attachments`, `payments`, `invoices`, `invoice_items`, `backups` — all with
-proper foreign-key relationships and indexes for fast search.
+`clinics`, `users`, `staff`, `staff_payments`, `patients`, `treatments`,
+`service_prices`, `visits`, `attachments`, `payments`, `invoices`,
+`invoice_items`, `backups` — all with proper foreign-key relationships and
+indexes for fast search.
 
 ---
 

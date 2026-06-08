@@ -17,6 +17,7 @@ from .patients_page import PatientsPage
 from .reports_page import ReportsPage
 from .services_page import ServicesPage
 from .settings_page import SettingsPage
+from .staff_page import StaffPage
 from .users_page import UsersPage
 
 
@@ -56,10 +57,10 @@ class MainWindow(QMainWindow):
     def _build_sidebar(self) -> QFrame:
         bar = QFrame()
         bar.setObjectName("Sidebar")
-        bar.setFixedWidth(240)
+        bar.setFixedWidth(258)
         lay = QVBoxLayout(bar)
-        lay.setContentsMargins(14, 18, 14, 18)
-        lay.setSpacing(6)
+        lay.setContentsMargins(16, 22, 16, 20)
+        lay.setSpacing(7)
 
         brand = QLabel("🦷  " + config.APP_NAME)
         brand.setObjectName("BrandTitle")
@@ -67,7 +68,12 @@ class MainWindow(QMainWindow):
         sub.setObjectName("BrandSub")
         lay.addWidget(brand)
         lay.addWidget(sub)
-        lay.addSpacing(16)
+        lay.addSpacing(14)
+        sep = QFrame()
+        sep.setObjectName("NavSep")
+        sep.setFrameShape(QFrame.Shape.HLine)
+        lay.addWidget(sep)
+        lay.addSpacing(10)
 
         self._nav_group = QButtonGroup(self)
         self._nav_group.setExclusive(True)
@@ -75,6 +81,7 @@ class MainWindow(QMainWindow):
         nav_items = [
             ("dashboard", "🏠  داشبورد", "dashboard"),
             ("patients", "👥  مریض‌ها", "patients"),
+            ("staff", "🩺  داکتران و کارمندان", "staff"),
             ("reports", "📊  گزارش‌ها", "reports"),
             ("services", "💲  خدمات و قیمت‌ها", "services"),
             ("users", "🔑  کاربران", "users"),
@@ -94,8 +101,13 @@ class MainWindow(QMainWindow):
 
         lay.addStretch(1)
 
+        sep2 = QFrame()
+        sep2.setObjectName("NavSep")
+        sep2.setFrameShape(QFrame.Shape.HLine)
+        lay.addWidget(sep2)
+        lay.addSpacing(6)
         logout_btn = QPushButton("🚪  خروج از حساب")
-        logout_btn.setObjectName("NavButton")
+        logout_btn.setObjectName("NavLogout")
         logout_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         logout_btn.clicked.connect(self._logout)
         lay.addWidget(logout_btn)
@@ -104,9 +116,10 @@ class MainWindow(QMainWindow):
     def _build_header(self) -> QFrame:
         header = QFrame()
         header.setObjectName("Header")
-        header.setFixedHeight(64)
+        header.setFixedHeight(74)
         lay = QHBoxLayout(header)
-        lay.setContentsMargins(20, 0, 20, 0)
+        lay.setContentsMargins(26, 0, 26, 0)
+        lay.setSpacing(12)
 
         self.page_title = QLabel("داشبورد")
         self.page_title.setObjectName("PageTitle")
@@ -142,6 +155,9 @@ class MainWindow(QMainWindow):
         self.patient_file.back.connect(lambda: self._go("patients"))
         self.stack.addWidget(self.patient_file)  # not a nav page
 
+        if session.can("staff"):
+            self.staff = StaffPage()
+            self._add_page("staff", self.staff)
         if session.can("reports"):
             self.reports = ReportsPage()
             self._add_page("reports", self.reports)
@@ -165,6 +181,7 @@ class MainWindow(QMainWindow):
     _TITLES = {
         "dashboard": "داشبورد",
         "patients": "مدیریت مریض‌ها",
+        "staff": "داکتران و کارمندان",
         "reports": "گزارش‌ها",
         "services": "خدمات و قیمت‌ها",
         "users": "مدیریت کاربران",

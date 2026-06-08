@@ -24,13 +24,31 @@ def _base_dir() -> str:
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+def _resource_dir() -> str:
+    """Directory holding read-only bundled resources (assets, fonts).
+
+    When frozen with PyInstaller these live in the temporary extraction
+    directory (``sys._MEIPASS``); from source they live in the project root.
+    """
+    meipass = getattr(sys, "_MEIPASS", None)
+    return meipass if meipass else _base_dir()
+
+
+# Writable data lives next to the executable / project so it survives updates.
 BASE_DIR = _base_dir()
 DATA_DIR = os.path.join(BASE_DIR, "data")
 DB_PATH = os.path.join(DATA_DIR, "dclinic.db")
 BACKUP_DIR = os.path.join(BASE_DIR, "backups")
 ATTACHMENTS_DIR = os.path.join(BASE_DIR, "attachments")
-ASSETS_DIR = os.path.join(BASE_DIR, "assets")
 LOGO_DIR = os.path.join(DATA_DIR, "logos")
+
+# Read-only resources (bundled into the executable).
+RESOURCE_DIR = _resource_dir()
+ASSETS_DIR = os.path.join(RESOURCE_DIR, "assets")
+FONTS_DIR = os.path.join(ASSETS_DIR, "fonts")
+
+# Primary UI font family (bundled, see assets/fonts).
+FONT_FAMILY = "Vazirmatn"
 
 # How many automatic daily backups to keep before rotating out the oldest.
 MAX_AUTO_BACKUPS = 14
@@ -44,8 +62,8 @@ APP_TITLE = "سیستم مدیریت کلینیک دندانپزشکی"  # Denta
 
 
 def ensure_dirs() -> None:
-    """Create all directories the application relies on."""
-    for path in (DATA_DIR, BACKUP_DIR, ATTACHMENTS_DIR, ASSETS_DIR, LOGO_DIR):
+    """Create the writable directories the application relies on."""
+    for path in (DATA_DIR, BACKUP_DIR, ATTACHMENTS_DIR, LOGO_DIR):
         os.makedirs(path, exist_ok=True)
 
 

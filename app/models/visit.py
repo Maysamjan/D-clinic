@@ -10,27 +10,29 @@ from ..database import db
 
 def create(patient_id: int, treatment_id: Optional[int], treatment_name: str,
            doctor_id: Optional[int], doctor_name: str, visit_date: str,
-           cost: float, notes: str = "", tooth: str = "") -> int:
+           cost: float, notes: str = "", tooth: str = "",
+           staff_id: Optional[int] = None) -> int:
     if not visit_date:
         visit_date = datetime.date.today().isoformat()
     return db.insert(
         """INSERT INTO visits (patient_id, treatment_id, treatment_name,
-           doctor_id, doctor_name, visit_date, cost, notes, tooth)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+           doctor_id, doctor_name, visit_date, cost, notes, tooth, staff_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (patient_id, treatment_id, treatment_name, doctor_id, doctor_name,
-         visit_date, cost, notes, tooth),
+         visit_date, cost, notes, tooth, staff_id),
     )
 
 
 def update(visit_id: int, treatment_id: Optional[int], treatment_name: str,
            doctor_id: Optional[int], doctor_name: str, visit_date: str,
-           cost: float, notes: str = "", tooth: str = "") -> None:
+           cost: float, notes: str = "", tooth: str = "",
+           staff_id: Optional[int] = None) -> None:
     db.execute(
         """UPDATE visits SET treatment_id = ?, treatment_name = ?,
            doctor_id = ?, doctor_name = ?, visit_date = ?, cost = ?,
-           notes = ?, tooth = ? WHERE id = ?""",
+           notes = ?, tooth = ?, staff_id = ? WHERE id = ?""",
         (treatment_id, treatment_name, doctor_id, doctor_name, visit_date,
-         cost, notes, tooth, visit_id),
+         cost, notes, tooth, staff_id, visit_id),
     )
 
 

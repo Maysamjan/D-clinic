@@ -14,8 +14,8 @@ from PyQt6.QtWidgets import (
 from ..models import (
     attachment as attachment_model,
     payment as payment_model,
+    staff as staff_model,
     treatment as treatment_model,
-    user as user_model,
 )
 from ..models import patient as patient_model
 from ..models import visit as visit_model
@@ -138,15 +138,12 @@ class VisitDialog(QDialog):
         self.tooth = QLineEdit()
         self.tooth.setPlaceholderText("مثلاً ۲۶")
 
+        # Treatment provider — pulled from the staff registry so the visit
+        # can be attributed for commission/payroll.
         self.doctor = QComboBox()
         self.doctor.addItem("—", None)
-        for d in user_model.doctors():
-            self.doctor.addItem(d["full_name"] or d["username"], d["id"])
-        # Preselect current user if they are a doctor
-        if session.current_user:
-            i = self.doctor.findData(session.current_user["id"])
-            if i >= 0:
-                self.doctor.setCurrentIndex(i)
+        for d in staff_model.providers():
+            self.doctor.addItem(d["full_name"], d["id"])
 
         self.cost = QDoubleSpinBox()
         self.cost.setRange(0, 100_000_000)
@@ -237,9 +234,13 @@ class VisitDialog(QDialog):
             self.treatment.addItem(v["treatment_name"], None)
             self.treatment.setCurrentIndex(self.treatment.count() - 1)
         self.tooth.setText(v.get("tooth", ""))
-        di = self.doctor.findData(v.get("doctor_id"))
+        di = self.doctor.findData(v.get("staff_id"))
         if di >= 0:
             self.doctor.setCurrentIndex(di)
+        elif v.get("doctor_name"):
+            # legacy visit whose provider is not in the staff list
+            self.doctor.addItem(v["doctor_name"], None)
+            self.doctor.setCurrentIndex(self.doctor.count() - 1)
         self.cost.setValue(float(v.get("cost", 0)))
         self.notes.setPlainText(v.get("notes", ""))
         for a in attachment_model.for_visit(v["id"]):
@@ -256,20 +257,21 @@ class VisitDialog(QDialog):
             or self.treatment.currentIndex() > 0 else ""
         if self.treatment.currentIndex() == 0:
             tname = ""
-        doctor_name = self.doctor.currentText() if self.doctor.currentData() else ""
+        staff_id = self.doctor.currentData()
+        doctor_name = self.doctor.currentText() if self.doctor.currentIndex() > 0 else ""
 
         if self.visit:
             visit_model.update(
                 self.visit["id"], self.treatment.currentData(), tname,
-                self.doctor.currentData(), doctor_name, iso,
-                self.cost.value(), self.notes.toPlainText(), self.tooth.text(),
+                None, doctor_name, iso, self.cost.value(),
+                self.notes.toPlainText(), self.tooth.text(), staff_id=staff_id,
             )
             vid = self.visit["id"]
         else:
             vid = visit_model.create(
                 self.patient_id, self.treatment.currentData(), tname,
-                self.doctor.currentData(), doctor_name, iso,
-                self.cost.value(), self.notes.toPlainText(), self.tooth.text(),
+                None, doctor_name, iso, self.cost.value(),
+                self.notes.toPlainText(), self.tooth.text(), staff_id=staff_id,
             )
         # Save pending attachments
         for f in self._pending_files:

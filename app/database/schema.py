@@ -143,6 +143,39 @@ CREATE TABLE IF NOT EXISTS invoice_items (
     FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
 );
 
+-- Clinic staff / doctors registry (for payroll) -------------------------
+CREATE TABLE IF NOT EXISTS staff (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    full_name     TEXT NOT NULL,
+    position      TEXT DEFAULT '',          -- داکتر / نرس / پذیرش / خدمات ...
+    phone         TEXT DEFAULT '',
+    pay_type      TEXT DEFAULT 'salary',    -- salary | commission | both
+    base_salary   REAL NOT NULL DEFAULT 0,  -- monthly salary
+    commission_pct REAL NOT NULL DEFAULT 0, -- percent of treatments performed
+    is_provider   INTEGER NOT NULL DEFAULT 0, -- shows in visit "doctor" list
+    is_active     INTEGER NOT NULL DEFAULT 1,
+    notes         TEXT DEFAULT '',
+    created_at    TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_staff_active ON staff(is_active);
+
+-- Payments made TO staff (salary / commission payouts) -------------------
+CREATE TABLE IF NOT EXISTS staff_payments (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    staff_id      INTEGER NOT NULL,
+    amount        REAL NOT NULL DEFAULT 0,
+    kind          TEXT DEFAULT 'salary',    -- salary | commission | bonus
+    period        TEXT DEFAULT '',          -- e.g. حمل ۱۴۰۵
+    method        TEXT DEFAULT 'cash',
+    pay_date      TEXT NOT NULL DEFAULT (date('now')),
+    notes         TEXT DEFAULT '',
+    receipt_no    TEXT,
+    created_by    INTEGER,
+    created_at    TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (staff_id) REFERENCES staff(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_staffpay_staff ON staff_payments(staff_id);
+
 -- Backup history ----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS backups (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -203,7 +236,15 @@ def init_db() -> None:
     conn = db.get_connection()
     conn.executescript(SCHEMA)
     conn.commit()
+    _migrate()
     _seed_defaults()
+
+
+def _migrate() -> None:
+    """Apply lightweight, idempotent schema migrations to older databases."""
+    cols = {r["name"] for r in db.query_all("PRAGMA table_info(visits)")}
+    if "staff_id" not in cols:
+        db.execute("ALTER TABLE visits ADD COLUMN staff_id INTEGER")
 
 
 def _seed_defaults() -> None:

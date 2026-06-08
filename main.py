@@ -33,7 +33,10 @@ class Application:
         self.app = QApplication(sys.argv)
         self.app.setApplicationName(config.APP_NAME)
         self.app.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
-        self.app.setFont(QFont("Segoe UI", 10))
+        family = helpers.load_fonts()
+        font = QFont(family, 11)
+        font.setHintingPreference(QFont.HintingPreference.PreferFullHinting)
+        self.app.setFont(font)
         self.app.setStyleSheet(helpers.load_stylesheet())
 
         self.login_window = None

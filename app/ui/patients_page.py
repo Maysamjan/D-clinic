@@ -20,8 +20,8 @@ class PatientsPage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(14)
+        layout.setContentsMargins(26, 24, 26, 24)
+        layout.setSpacing(16)
 
         # Search + actions bar
         bar = QHBoxLayout()

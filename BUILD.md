@@ -57,6 +57,7 @@ pip install pyinstaller
 
 pyinstaller --noconfirm --windowed --name D-Clinic ^
     --add-data "app/resources/styles.qss;app/resources" ^
+    --add-data "assets;assets" ^
     main.py
 ```
 
@@ -65,8 +66,13 @@ pyinstaller --noconfirm --windowed --name D-Clinic ^
 > ```bash
 > pyinstaller --noconfirm --windowed --name D-Clinic \
 >     --add-data "app/resources/styles.qss:app/resources" \
+>     --add-data "assets:assets" \
 >     main.py
 > ```
+
+> The bundled **Vazirmatn** font lives in `assets/fonts` — the
+> `--add-data "assets;assets"` flag ships it inside the executable so the
+> UI and printed documents look identical on every machine.
 
 Results:
 - One-folder build: `dist/D-Clinic/D-Clinic.exe` (portable folder)
