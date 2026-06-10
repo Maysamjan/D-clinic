@@ -21,6 +21,7 @@ from ..models import patient as patient_model
 from ..models import visit as visit_model
 from ..services import session
 from ..utils import helpers
+from .widgets.dialog_header import setup_form_dialog
 from .widgets.jalali_date_edit import JalaliDateEdit
 
 
@@ -34,15 +35,19 @@ class PatientDialog(QDialog):
         self.patient = patient
         self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.setWindowTitle("ویرایش مریض" if patient else "ثبت مریض جدید")
-        self.setMinimumWidth(420)
+        self.setMinimumWidth(440)
         self._build()
         if patient:
             self._load(patient)
 
     def _build(self):
-        layout = QVBoxLayout(self)
+        sub = (f"کود: {helpers.jalali_digits(self.patient.get('code',''))}"
+               if self.patient else "اطلاعات مریض جدید را وارد کنید")
+        layout = setup_form_dialog(
+            self, "ویرایش مریض" if self.patient else "ثبت مریض جدید", sub, "👤")
         form = QFormLayout()
-        form.setSpacing(10)
+        form.setSpacing(13)
+        form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
 
         self.full_name = QLineEdit()
         self.phone = QLineEdit()
@@ -123,9 +128,12 @@ class VisitDialog(QDialog):
             self._load(visit)
 
     def _build(self):
-        layout = QVBoxLayout(self)
+        layout = setup_form_dialog(
+            self, "ویرایش ویزیت" if self.visit else "ثبت ویزیت / معالجه",
+            "جزئیات معالجه و هزینه را وارد کنید", "🦷")
         form = QFormLayout()
-        form.setSpacing(10)
+        form.setSpacing(12)
+        form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
 
         self.date = JalaliDateEdit()
 
@@ -288,18 +296,15 @@ class PaymentDialog(QDialog):
     def __init__(self, parent=None, patient_id: int = 0, balance: float = 0):
         super().__init__(parent)
         self.patient_id = patient_id
-        self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.setWindowTitle("ثبت پرداخت")
-        self.setMinimumWidth(380)
-        layout = QVBoxLayout(self)
-
-        if balance > 0:
-            info = QLabel("باقیمانده فعلی: " + helpers.format_money(balance))
-            info.setStyleSheet("color:#dc2626; font-weight:bold;")
-            layout.addWidget(info)
+        self.setMinimumWidth(400)
+        sub = ("باقیمانده فعلی: " + helpers.format_money(balance)
+               if balance > 0 else "ثبت پرداخت مریض")
+        layout = setup_form_dialog(self, "ثبت پرداخت", sub, "💳")
 
         form = QFormLayout()
-        form.setSpacing(10)
+        form.setSpacing(13)
+        form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         self.amount = QDoubleSpinBox()
         self.amount.setRange(0, 100_000_000)
         self.amount.setSingleStep(100)

@@ -21,6 +21,7 @@ from ..models import inventory as inv_model
 from ..services import session
 from ..utils import helpers
 from .widgets.actions import actions_cell, make_button, prepare_table
+from .widgets.dialog_header import setup_form_dialog
 from .widgets.jalali_date_edit import JalaliDateEdit
 
 UNITS = ["عدد", "بسته", "قطی", "بوتل", "میلی‌لیتر", "گرام", "کیلوگرام", "متر"]
@@ -34,12 +35,14 @@ class ItemDialog(QDialog):
     def __init__(self, parent=None, item: dict | None = None):
         super().__init__(parent)
         self.item = item
-        self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.setWindowTitle("ویرایش قلم" if item else "ثبت قلم جدید (دوا / تجهیزات)")
-        self.setMinimumWidth(440)
-        layout = QVBoxLayout(self)
+        self.setMinimumWidth(460)
+        layout = setup_form_dialog(
+            self, "ویرایش قلم" if item else "ثبت قلم جدید",
+            "دوا، تجهیزات یا مواد مصرفی گدام", "📦")
         form = QFormLayout()
-        form.setSpacing(12)
+        form.setSpacing(13)
+        form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
 
         self.name = QLineEdit()
         self.category = QComboBox()
@@ -133,20 +136,18 @@ class StockDialog(QDialog):
         super().__init__(parent)
         self.item = item
         self.mode = mode  # in | out
-        self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         title = "ورود به گدام" if mode == "in" else "خروج از گدام"
         self.setWindowTitle(title)
-        self.setMinimumWidth(360)
-        layout = QVBoxLayout(self)
-
-        info = QLabel(f"{item.get('name','')} — موجودی فعلی: "
-                      f"{helpers.jalali_digits(item.get('quantity',0))} "
-                      f"{item.get('unit','')}")
-        info.setStyleSheet("font-weight:700; color:#0B7D72;")
-        layout.addWidget(info)
+        self.setMinimumWidth(400)
+        sub = (f"{item.get('name','')} — موجودی فعلی: "
+               f"{helpers.jalali_digits(_num(item.get('quantity',0)))} "
+               f"{item.get('unit','')}")
+        layout = setup_form_dialog(self, title, sub,
+                                   "➕" if mode == "in" else "➖")
 
         form = QFormLayout()
-        form.setSpacing(12)
+        form.setSpacing(13)
+        form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         self.amount = QDoubleSpinBox()
         self.amount.setRange(0, 10_000_000)
         self.amount.setDecimals(2)
@@ -234,19 +235,23 @@ class InventoryPage(QWidget):
         self.count_label.setObjectName("SectionHint")
         layout.addWidget(self.count_label)
 
-        self.table = QTableWidget(0, 8)
+        self.table = QTableWidget(0, 7)
         self.table.setHorizontalHeaderLabels([
-            "نام", "دسته", "موجودی", "حداقل", "قیمت فی واحد",
+            "نام", "دسته", "موجودی", "قیمت فی واحد",
             "ارزش کل", "تاریخ انقضا", "عملیات"])
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(
             QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setAlternatingRowColors(True)
+        self.table.setWordWrap(True)
+        self.table.setTextElideMode(Qt.TextElideMode.ElideNone)
         prepare_table(self.table)
+        self.table.verticalHeader().setSectionResizeMode(
+            QHeaderView.ResizeMode.ResizeToContents)
         h = self.table.horizontalHeader()
+        h.setMinimumSectionSize(80)
         h.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        h.setMinimumSectionSize(72)
-        h.setSectionResizeMode(7, QHeaderView.ResizeMode.ResizeToContents)
+        h.setSectionResizeMode(6, QHeaderView.ResizeMode.ResizeToContents)
         layout.addWidget(self.table)
 
     # -- actions ----------------------------------------------------------
@@ -302,17 +307,15 @@ class InventoryPage(QWidget):
                 qty_item.setForeground(QColor("#E11D48"))
             self.table.setItem(r, 2, qty_item)
             self.table.setItem(r, 3, QTableWidgetItem(
-                helpers.jalali_digits(_num(it.get("min_quantity")))))
-            self.table.setItem(r, 4, QTableWidgetItem(
                 helpers.format_money(it.get("unit_price", 0))))
-            self.table.setItem(r, 5, QTableWidgetItem(helpers.format_money(
+            self.table.setItem(r, 4, QTableWidgetItem(helpers.format_money(
                 float(it.get("quantity") or 0) * float(it.get("unit_price") or 0))))
             exp = it.get("expiry_date")
             exp_item = QTableWidgetItem(helpers.jalali_date(exp) if exp else "—")
             if exp and exp <= today:
                 exp_item.setForeground(QColor("#E11D48"))
-            self.table.setItem(r, 6, exp_item)
-            self.table.setCellWidget(r, 7, self._actions(it))
+            self.table.setItem(r, 5, exp_item)
+            self.table.setCellWidget(r, 6, self._actions(it))
 
     def _actions(self, it):
         return actions_cell([

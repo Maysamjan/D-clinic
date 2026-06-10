@@ -32,13 +32,16 @@ PAYMENT_KINDS = {
 def create(full_name: str, position: str, phone: str, pay_type: str,
            base_salary: float, commission_pct: float,
            is_provider: int = 0, notes: str = "") -> int:
-    return db.insert(
+    sid = db.insert(
         """INSERT INTO staff (full_name, position, phone, pay_type,
            base_salary, commission_pct, is_provider, notes)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
         (full_name.strip(), position, phone.strip(), pay_type,
          base_salary, commission_pct, is_provider, notes),
     )
+    db.execute("UPDATE staff SET code = ? WHERE id = ?",
+               (f"E-{sid:06d}", sid))
+    return sid
 
 
 def update(staff_id: int, full_name: str, position: str, phone: str,
@@ -168,6 +171,41 @@ def summary(staff_id: int) -> dict:
         "total_paid": total_paid,
         "base_salary": float(s.get("base_salary") or 0),
     }
+
+
+def search(term: str = "", active_only: bool = True) -> list[dict]:
+    """Search staff by name, code or position."""
+    clauses = []
+    params: list = []
+    if active_only:
+        clauses.append("is_active = 1")
+    term = (term or "").strip()
+    if term:
+        like = f"%{term}%"
+        clauses.append("(full_name LIKE ? OR code LIKE ? OR position LIKE ?)")
+        params.extend([like, like, like])
+    where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
+    rows = db.query_all(f"SELECT * FROM staff {where} ORDER BY full_name", params)
+    return [dict(r) for r in rows]
+
+
+def salary_paid_in_period(staff_id: int, period: str) -> float:
+    """Total salary already paid to a staff member for a given period label."""
+    row = db.query_one(
+        "SELECT COALESCE(SUM(amount), 0) AS s FROM staff_payments "
+        "WHERE staff_id = ? AND kind = 'salary' AND period = ?",
+        (staff_id, period),
+    )
+    return float(row["s"]) if row else 0.0
+
+
+def total_salary_in_period(period: str) -> float:
+    row = db.query_one(
+        "SELECT COALESCE(SUM(amount), 0) AS s FROM staff_payments "
+        "WHERE kind = 'salary' AND period = ?",
+        (period,),
+    )
+    return float(row["s"]) if row else 0.0
 
 
 def total_paid_between(start_iso: str, end_iso: str) -> float:

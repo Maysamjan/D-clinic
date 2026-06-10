@@ -16,6 +16,7 @@ from .inventory_page import InventoryPage
 from .patient_file import PatientFilePage
 from .patients_page import PatientsPage
 from .reports_page import ReportsPage
+from .salary_page import SalaryPage
 from .services_page import ServicesPage
 from .settings_page import SettingsPage
 from .staff_page import StaffPage
@@ -83,6 +84,7 @@ class MainWindow(QMainWindow):
             ("dashboard", "🏠  داشبورد", "dashboard"),
             ("patients", "👥  مریض‌ها", "patients"),
             ("staff", "🩺  داکتران و کارمندان", "staff"),
+            ("salaries", "💵  معاشات", "salaries"),
             ("inventory", "📦  گدام و انبار", "inventory"),
             ("reports", "📊  گزارش‌ها", "reports"),
             ("services", "💲  خدمات و قیمت‌ها", "services"),
@@ -160,6 +162,9 @@ class MainWindow(QMainWindow):
         if session.can("staff"):
             self.staff = StaffPage()
             self._add_page("staff", self.staff)
+        if session.can("salaries"):
+            self.salaries = SalaryPage()
+            self._add_page("salaries", self.salaries)
         if session.can("inventory"):
             self.inventory = InventoryPage()
             self._add_page("inventory", self.inventory)
@@ -187,6 +192,7 @@ class MainWindow(QMainWindow):
         "dashboard": "داشبورد",
         "patients": "مدیریت مریض‌ها",
         "staff": "داکتران و کارمندان",
+        "salaries": "معاشات کارمندان",
         "inventory": "گدام و انبار",
         "reports": "گزارش‌ها",
         "services": "خدمات و قیمت‌ها",

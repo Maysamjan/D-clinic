@@ -146,6 +146,7 @@ CREATE TABLE IF NOT EXISTS invoice_items (
 -- Clinic staff / doctors registry (for payroll) -------------------------
 CREATE TABLE IF NOT EXISTS staff (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    code          TEXT UNIQUE,               -- staff id e.g. E-000001
     full_name     TEXT NOT NULL,
     position      TEXT DEFAULT '',          -- داکتر / نرس / پذیرش / خدمات ...
     phone         TEXT DEFAULT '',
@@ -277,6 +278,14 @@ def _migrate() -> None:
     cols = {r["name"] for r in db.query_all("PRAGMA table_info(visits)")}
     if "staff_id" not in cols:
         db.execute("ALTER TABLE visits ADD COLUMN staff_id INTEGER")
+
+    staff_cols = {r["name"] for r in db.query_all("PRAGMA table_info(staff)")}
+    if "code" not in staff_cols:
+        db.execute("ALTER TABLE staff ADD COLUMN code TEXT")
+    # Backfill staff codes for any rows missing one.
+    for row in db.query_all("SELECT id FROM staff WHERE code IS NULL OR code = ''"):
+        db.execute("UPDATE staff SET code = ? WHERE id = ?",
+                   (f"E-{int(row['id']):06d}", row["id"]))
 
 
 def _seed_defaults() -> None:

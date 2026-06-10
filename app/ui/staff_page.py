@@ -19,6 +19,7 @@ from ..models import staff as staff_model
 from ..services import session
 from ..utils import helpers, printing
 from .widgets.actions import actions_cell, make_button, prepare_table
+from .widgets.dialog_header import dialog_header, setup_form_dialog
 from .widgets.jalali_date_edit import JalaliDateEdit
 
 POSITIONS = ["داکتر", "نرس", "پذیرش", "تکنیشن", "خدمات", "محاسب", "مدیر"]
@@ -34,10 +35,22 @@ class StaffDialog(QDialog):
         self.member = member
         self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.setWindowTitle("ویرایش کارمند" if member else "ثبت کارمند / داکتر جدید")
-        self.setMinimumWidth(440)
-        layout = QVBoxLayout(self)
+        self.setMinimumWidth(460)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+        sub = (f"کود: {helpers.jalali_digits(member.get('code',''))}"
+               if member else "یک کارمند یا داکتر جدید ثبت کنید")
+        outer.addWidget(dialog_header(
+            "ویرایش کارمند" if member else "ثبت کارمند / داکتر جدید", sub, "🩺"))
+        body = QFrame()
+        body.setObjectName("DialogBody")
+        outer.addWidget(body)
+        layout = QVBoxLayout(body)
+        layout.setContentsMargins(20, 18, 20, 18)
         form = QFormLayout()
-        form.setSpacing(12)
+        form.setSpacing(13)
+        form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
 
         self.full_name = QLineEdit()
         self.position = QComboBox()
@@ -122,12 +135,13 @@ class StaffPaymentDialog(QDialog):
         super().__init__(parent)
         self.staff_id = staff_id
         self.payment_id = None
-        self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.setWindowTitle("ثبت پرداخت به کارمند")
-        self.setMinimumWidth(380)
-        layout = QVBoxLayout(self)
+        self.setMinimumWidth(400)
+        layout = setup_form_dialog(
+            self, "ثبت پرداخت به کارمند", "فیصدی، معاش یا پاداش", "💵")
         form = QFormLayout()
-        form.setSpacing(12)
+        form.setSpacing(13)
+        form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
 
         self.kind = QComboBox()
         for key, label in staff_model.PAYMENT_KINDS.items():
@@ -321,19 +335,24 @@ class StaffPage(QWidget):
         bar.addWidget(add_btn)
         layout.addLayout(bar)
 
-        self.table = QTableWidget(0, 8)
+        self.table = QTableWidget(0, 9)
         self.table.setHorizontalHeaderLabels([
-            "نام", "وظیفه", "نوع پرداخت", "فیصدی کسب‌شده",
+            "کود", "نام", "وظیفه", "نوع پرداخت", "فیصدی کسب‌شده",
             "پرداخت‌شده", "باقیمانده", "وضعیت", "عملیات"])
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(
             QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setAlternatingRowColors(True)
+        self.table.setWordWrap(True)
+        self.table.setTextElideMode(Qt.TextElideMode.ElideNone)
         prepare_table(self.table)
+        self.table.verticalHeader().setSectionResizeMode(
+            QHeaderView.ResizeMode.ResizeToContents)
         self.table.doubleClicked.connect(self._open_selected)
         h = self.table.horizontalHeader()
-        h.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        h.setSectionResizeMode(7, QHeaderView.ResizeMode.ResizeToContents)
+        h.setMinimumSectionSize(70)
+        h.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        h.setSectionResizeMode(8, QHeaderView.ResizeMode.ResizeToContents)
         layout.addWidget(self.table)
 
     def _add_staff(self):
@@ -371,22 +390,25 @@ class StaffPage(QWidget):
             s = staff_model.summary(m["id"])
             r = self.table.rowCount()
             self.table.insertRow(r)
+            code_item = QTableWidgetItem(helpers.jalali_digits(m.get("code", "")))
+            code_item.setData(Qt.ItemDataRole.UserRole, m["id"])
+            self.table.setItem(r, 0, code_item)
             name_item = QTableWidgetItem(m.get("full_name", ""))
             name_item.setData(Qt.ItemDataRole.UserRole, m["id"])
-            self.table.setItem(r, 0, name_item)
-            self.table.setItem(r, 1, QTableWidgetItem(m.get("position") or "—"))
-            self.table.setItem(r, 2, QTableWidgetItem(
-                staff_model.PAY_TYPES.get(m.get("pay_type"), "")))
+            self.table.setItem(r, 1, name_item)
+            self.table.setItem(r, 2, QTableWidgetItem(m.get("position") or "—"))
             self.table.setItem(r, 3, QTableWidgetItem(
-                helpers.format_money(s["commission_earned"])))
+                staff_model.PAY_TYPES.get(m.get("pay_type"), "")))
             self.table.setItem(r, 4, QTableWidgetItem(
+                helpers.format_money(s["commission_earned"])))
+            self.table.setItem(r, 5, QTableWidgetItem(
                 helpers.format_money(s["total_paid"])))
             bal_item = QTableWidgetItem(helpers.format_money(s["commission_balance"]))
-            self.table.setItem(r, 5, bal_item)
-            self.table.setItem(r, 6, QTableWidgetItem(
+            self.table.setItem(r, 6, bal_item)
+            self.table.setItem(r, 7, QTableWidgetItem(
                 "فعال" if m.get("is_active") else "غیرفعال"))
 
-            self.table.setCellWidget(r, 7, actions_cell([
+            self.table.setCellWidget(r, 8, actions_cell([
                 make_button("حساب", "primary", "مشاهده حساب و ثبت پرداخت",
                             lambda sid=m["id"]: self._open_detail(sid)),
                 make_button("ویرایش", "default", "ویرایش",

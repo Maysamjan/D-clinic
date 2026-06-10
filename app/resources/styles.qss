@@ -287,9 +287,30 @@ QScrollBar::handle:horizontal:hover { background: #A7B7C9; }
 
 /* ---------------- Dialogs ---------------- */
 QDialog { background-color: #F4F7FB; }
-QDialog QLabel { color: #2A3B52; }
+QDialog QLabel { color: #34465C; font-weight: 600; }
 QMessageBox { background-color: #ffffff; }
 QMessageBox QLabel { color: #14253B; }
+
+/* Styled dialog header bar */
+QFrame#DialogHeader {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 #0C2A33, stop:1 #0E9F8E);
+}
+QFrame#DialogHeader QLabel { color: #ffffff; }
+QLabel#DialogHeaderTitle { color: #ffffff; font-size: 17px; font-weight: 700; }
+QLabel#DialogHeaderSub { color: #CFEFEA; font-size: 12px; font-weight: 500; }
+QLabel#DialogHeaderIcon {
+    background: rgba(255,255,255,0.18);
+    border-radius: 12px;
+    font-size: 22px;
+}
+
+/* Card wrapper for dialog form bodies */
+QFrame#DialogBody {
+    background: #ffffff;
+    border: 1px solid #E7EDF4;
+    border-radius: 12px;
+}
 
 /* ---------------- Login ---------------- */
 #LoginCard {
