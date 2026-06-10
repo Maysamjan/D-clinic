@@ -164,16 +164,44 @@ def _wrap(body: str) -> str:
             f"<body>{body}</body></html>")
 
 
+# QTextDocument always lays table cells out left-to-right regardless of the
+# document direction, so for a right-to-left reading order we reverse the
+# cell sequence of every row manually (first logical cell ends up on the
+# right).
+
+def _info_table(rows: list[list[tuple]]) -> str:
+    """Build a label/value information table that reads right-to-left.
+
+    Each row is a list of ``(label, value)`` or ``(label, value, value_span)``
+    tuples. Labels appear on the right, values to their left.
+    """
+    html = "<table class='info' width='100%' cellspacing='0' cellpadding='0'>"
+    for row in rows:
+        tds = []
+        for item in row:
+            label, value = item[0], item[1]
+            vspan = item[2] if len(item) > 2 else 1
+            span = f" colspan='{vspan}'" if vspan > 1 else ""
+            tds.append(f"<td class='k' align='right'>{label}</td>")
+            tds.append(f"<td class='v' align='right'{span}>{value}</td>")
+        tds.reverse()  # render right-to-left
+        html += "<tr>" + "".join(tds) + "</tr>"
+    return html + "</table>"
+
+
 def _grid(headers: list[str], rows: list[list[str]], widths=None) -> str:
-    """Build a readable data table with header row and zebra striping."""
+    """Build a right-to-left data table with header row and zebra striping."""
+    cols = list(zip(headers, widths or [None] * len(headers)))
+    cols = cols[::-1]  # reverse columns for RTL
     ths = ""
-    for i, h in enumerate(headers):
-        w = f" width='{widths[i]}'" if widths and widths[i] else ""
-        ths += f"<th class='col'{w}>{h}</th>"
+    for h, w in cols:
+        wattr = f" width='{w}'" if w else ""
+        ths += f"<th class='col' align='right'{wattr}>{h}</th>"
     body = ""
     for r_i, row in enumerate(rows):
         alt = " alt" if r_i % 2 else ""
-        tds = "".join(f"<td class='cell{alt}'>{cell}</td>" for cell in row)
+        cells = list(row)[::-1]  # reverse cells for RTL
+        tds = "".join(f"<td class='cell{alt}' align='right'>{c}</td>" for c in cells)
         body += f"<tr>{tds}</tr>"
     if not rows:
         body = (f"<tr><td class='cell' colspan='{len(headers)}' "
@@ -193,18 +221,15 @@ def patient_file_html(patient_id: int) -> str:
     summary = patient_model.financial_summary(patient_id)
     visits = visit_model.for_patient(patient_id, ascending=True)
 
-    info = _section("معلومات مریض") + f"""
-    <table class='info' width='100%' cellspacing='0' cellpadding='0'>
-      <tr><td class='k' width='120'>نام مکمل</td><td class='v'>{p.get('full_name','')}</td>
-          <td class='k' width='120'>کود مریض</td><td class='v'>{helpers.jalali_digits(p.get('code',''))}</td></tr>
-      <tr><td class='k'>شماره تلفن</td><td class='v'>{helpers.jalali_digits(p.get('phone',''))}</td>
-          <td class='k'>جنسیت</td><td class='v'>{helpers.gender_label(p.get('gender',''))}</td></tr>
-      <tr><td class='k'>سن</td><td class='v'>{helpers.jalali_digits(p.get('age')) if p.get('age') else '—'}</td>
-          <td class='k'>تاریخ ثبت</td><td class='v'>{helpers.jalali_date(p.get('registered_at'))}</td></tr>
-      <tr><td class='k'>آدرس</td><td class='v' colspan='3'>{p.get('address') or '—'}</td></tr>
-    </table>
-    <div style='height:10pt;'></div>
-    """
+    info = _section("معلومات مریض") + _info_table([
+        [("نام مکمل", p.get("full_name", "")),
+         ("کود مریض", helpers.jalali_digits(p.get("code", "")))],
+        [("شماره تلفن", helpers.jalali_digits(p.get("phone", ""))),
+         ("جنسیت", helpers.gender_label(p.get("gender", "")))],
+        [("سن", helpers.jalali_digits(p.get("age")) if p.get("age") else "—"),
+         ("تاریخ ثبت", helpers.jalali_date(p.get("registered_at")))],
+        [("آدرس", p.get("address") or "—", 3)],
+    ]) + "<div style='height:10pt;'></div>"
 
     rows = []
     for v in visits:
@@ -223,14 +248,13 @@ def patient_file_html(patient_id: int) -> str:
         rows, widths=[90, None, 55, None, None, 55, 95],
     ) + "<div style='height:10pt;'></div>"
 
-    finance = _section("خلاصه مالی") + f"""
-    <table class='info' width='100%' cellspacing='0' cellpadding='0'>
-      <tr><td class='k' width='150'>تعداد ویزیت‌ها</td><td class='v'>{helpers.jalali_digits(summary['visits'])}</td>
-          <td class='k' width='150'>مجموع هزینه</td><td class='v'>{helpers.format_money(summary['total_cost'])}</td></tr>
-      <tr><td class='k'>مجموع پرداختی</td><td class='v'>{helpers.format_money(summary['total_paid'])}</td>
-          <td class='k'>باقیمانده</td><td class='v' style='color:#C0344E;'>{helpers.format_money(summary['balance'])}</td></tr>
-    </table>
-    """
+    finance = _section("خلاصه مالی") + _info_table([
+        [("تعداد ویزیت‌ها", helpers.jalali_digits(summary["visits"])),
+         ("مجموع هزینه", helpers.format_money(summary["total_cost"]))],
+        [("مجموع پرداختی", helpers.format_money(summary["total_paid"])),
+         ("باقیمانده",
+          f"<span style='color:#C0344E;'>{helpers.format_money(summary['balance'])}</span>")],
+    ])
 
     return _wrap(_header("پرونده کامل مریض") + info + timeline + finance)
 
@@ -247,19 +271,18 @@ def visit_html(visit_id: int) -> str:
     atts = attachment_model.for_visit(visit_id)
 
     body = _header("گزارش ویزیت", doc_date=helpers.jalali_date(v.get("visit_date")))
-    body += _section("مشخصات ویزیت") + f"""
-    <table class='info' width='100%' cellspacing='0' cellpadding='0'>
-      <tr><td class='k' width='120'>مریض</td><td class='v'>{p.get('full_name','') if p else ''}</td>
-          <td class='k' width='120'>کود مریض</td><td class='v'>{helpers.jalali_digits(p.get('code','') if p else '')}</td></tr>
-      <tr><td class='k'>تاریخ</td><td class='v'>{helpers.jalali_date(v.get('visit_date'))}</td>
-          <td class='k'>داکتر</td><td class='v'>{v.get('doctor_name') or '—'}</td></tr>
-      <tr><td class='k'>نوع معالجه</td><td class='v'>{v.get('treatment_name') or 'ویزیت'}</td>
-          <td class='k'>دندان</td><td class='v'>{helpers.jalali_digits(v.get('tooth')) if v.get('tooth') else '—'}</td></tr>
-      <tr><td class='k'>یادداشت</td><td class='v' colspan='3'>{v.get('notes') or '—'}</td></tr>
-    </table>
+    body += _section("مشخصات ویزیت") + _info_table([
+        [("مریض", p.get("full_name", "") if p else ""),
+         ("کود مریض", helpers.jalali_digits(p.get("code", "") if p else ""))],
+        [("تاریخ", helpers.jalali_date(v.get("visit_date"))),
+         ("داکتر", v.get("doctor_name") or "—")],
+        [("نوع معالجه", v.get("treatment_name") or "ویزیت"),
+         ("دندان", helpers.jalali_digits(v.get("tooth")) if v.get("tooth") else "—")],
+        [("یادداشت", v.get("notes") or "—", 3)],
+    ]) + f"""
     <div style='height:9pt;'></div>
     <table width='100%' cellspacing='0' cellpadding='0'><tr>
-      <td class='amount'>هزینه این ویزیت: &nbsp; {helpers.format_money(v.get('cost',0))}</td>
+      <td class='amount' align='right'>هزینه این ویزیت: &nbsp; {helpers.format_money(v.get('cost',0))}</td>
     </tr></table>
     """
     if atts:
@@ -289,13 +312,10 @@ def invoice_html(invoice_id: int) -> str:
 
     body = _header("صورتحساب", doc_no=inv.get("number", ""),
                    doc_date=helpers.jalali_date(inv.get("issue_date")))
-    body += _section("مشخصات مریض") + f"""
-    <table class='info' width='100%' cellspacing='0' cellpadding='0'>
-      <tr><td class='k' width='120'>نام مریض</td><td class='v'>{p.get('full_name','') if p else ''}</td>
-          <td class='k' width='120'>کود مریض</td><td class='v'>{helpers.jalali_digits(p.get('code','') if p else '')}</td></tr>
-    </table>
-    <div style='height:9pt;'></div>
-    """
+    body += _section("مشخصات مریض") + _info_table([
+        [("نام مریض", p.get("full_name", "") if p else ""),
+         ("کود مریض", helpers.jalali_digits(p.get("code", "") if p else ""))],
+    ]) + "<div style='height:9pt;'></div>"
     body += _section("خدمات") + _grid(
         ["#", "شرح خدمات", "مبلغ"], rows, widths=[46, None, 150])
     body += f"""
@@ -328,19 +348,17 @@ def staff_receipt_html(payment_id: int) -> str:
 
     body = _header("رسید پرداخت", doc_no=pay.get("receipt_no", ""),
                    doc_date=helpers.jalali_date(pay.get("pay_date")))
-    body += _section("مشخصات پرداخت") + f"""
-    <table class='info' width='100%' cellspacing='0' cellpadding='0'>
-      <tr><td class='k' width='130'>دریافت‌کننده</td><td class='v'>{member.get('full_name','')}</td>
-          <td class='k' width='100'>وظیفه</td><td class='v'>{member.get('position') or '—'}</td></tr>
-      <tr><td class='k'>نوع پرداخت</td><td class='v'>{kind}</td>
-          <td class='k'>دوره</td><td class='v'>{pay.get('period') or '—'}</td></tr>
-      <tr><td class='k'>روش پرداخت</td><td class='v'>{method}</td>
-          <td class='k'>تاریخ</td><td class='v'>{helpers.jalali_date(pay.get('pay_date'))}</td></tr>
-      <tr><td class='k'>یادداشت</td><td class='v' colspan='3'>{pay.get('notes') or '—'}</td></tr>
-    </table>
+    body += _section("مشخصات پرداخت") + _info_table([
+        [("دریافت‌کننده", member.get("full_name", "")),
+         ("وظیفه", member.get("position") or "—")],
+        [("نوع پرداخت", kind), ("دوره", pay.get("period") or "—")],
+        [("روش پرداخت", method),
+         ("تاریخ", helpers.jalali_date(pay.get("pay_date")))],
+        [("یادداشت", pay.get("notes") or "—", 3)],
+    ]) + f"""
     <div style='height:9pt;'></div>
     <table width='100%' cellspacing='0' cellpadding='0'><tr>
-      <td class='amount'>مبلغ پرداخت‌شده: &nbsp; {helpers.format_money(pay.get('amount',0))}</td>
+      <td class='amount' align='right'>مبلغ پرداخت‌شده: &nbsp; {helpers.format_money(pay.get('amount',0))}</td>
     </tr></table>
     <br><br><br>
     <table width='100%' cellspacing='0' cellpadding='0'>
