@@ -16,6 +16,11 @@ dist/
 *.db-wal
 *.db-shm
 
+# Licensing — the vendor private key must NEVER be committed
+/license_private/
+*.lic
+license.dat
+
 # OS / editor
 .DS_Store
 Thumbs.db

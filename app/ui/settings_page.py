@@ -16,7 +16,8 @@ from PyQt6.QtWidgets import (
 
 from .. import config
 from ..models import clinic as clinic_model
-from ..services import backup_service
+from ..models import user as user_model
+from ..services import backup_service, session
 from ..utils import helpers
 
 
@@ -27,12 +28,20 @@ class SettingsPage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._logo_path = ""
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(16)
+        root = QVBoxLayout(self)
+        root.setContentsMargins(22, 20, 22, 20)
+        root.setSpacing(16)
 
-        layout.addWidget(self._build_clinic_card(), 1)
-        layout.addWidget(self._build_backup_card(), 1)
+        top = QHBoxLayout()
+        top.setSpacing(16)
+        top.addWidget(self._build_clinic_card(), 1)
+
+        right = QVBoxLayout()
+        right.setSpacing(16)
+        right.addWidget(self._build_backup_card(), 1)
+        right.addWidget(self._build_password_card())
+        top.addLayout(right, 1)
+        root.addLayout(top)
 
     def _build_clinic_card(self) -> QFrame:
         card = QFrame()
@@ -131,6 +140,64 @@ class SettingsPage(QWidget):
         self.backups_table.horizontalHeader().setStretchLastSection(True)
         lay.addWidget(self.backups_table, 1)
         return card
+
+    def _build_password_card(self) -> QFrame:
+        card = QFrame()
+        card.setObjectName("Card")
+        lay = QVBoxLayout(card)
+        lay.setContentsMargins(20, 18, 20, 18)
+        lay.setSpacing(10)
+
+        title = QLabel("تغییر رمز عبور")
+        title.setObjectName("CardTitle")
+        lay.addWidget(title)
+        who = session.current_user or {}
+        sub = QLabel("کاربر: " + (who.get("full_name") or who.get("username", "")))
+        sub.setObjectName("SectionHint")
+        lay.addWidget(sub)
+
+        form = QFormLayout()
+        form.setSpacing(10)
+        form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        self.cur_pw = QLineEdit()
+        self.cur_pw.setEchoMode(QLineEdit.EchoMode.Password)
+        self.new_pw = QLineEdit()
+        self.new_pw.setEchoMode(QLineEdit.EchoMode.Password)
+        self.new_pw2 = QLineEdit()
+        self.new_pw2.setEchoMode(QLineEdit.EchoMode.Password)
+        form.addRow("رمز عبور فعلی", self.cur_pw)
+        form.addRow("رمز عبور جدید", self.new_pw)
+        form.addRow("تکرار رمز جدید", self.new_pw2)
+        lay.addLayout(form)
+
+        btn = QPushButton("تغییر رمز عبور")
+        btn.clicked.connect(self._change_password)
+        lay.addWidget(btn)
+        lay.addStretch(1)
+        return card
+
+    def _change_password(self):
+        if not session.current_user:
+            return
+        cur = self.cur_pw.text()
+        new = self.new_pw.text()
+        new2 = self.new_pw2.text()
+        if not cur or not new:
+            QMessageBox.warning(self, "خطا", "همه فیلدها را پر کنید.")
+            return
+        if len(new) < 4:
+            QMessageBox.warning(self, "خطا", "رمز جدید باید حداقل ۴ حرف باشد.")
+            return
+        if new != new2:
+            QMessageBox.warning(self, "خطا", "رمز جدید و تکرار آن یکسان نیستند.")
+            return
+        if user_model.change_password(session.current_user["id"], cur, new):
+            QMessageBox.information(self, "موفق", "رمز عبور با موفقیت تغییر کرد.")
+            self.cur_pw.clear()
+            self.new_pw.clear()
+            self.new_pw2.clear()
+        else:
+            QMessageBox.critical(self, "خطا", "رمز عبور فعلی اشتباه است.")
 
     # -- Logo -------------------------------------------------------------
     def _pick_logo(self):

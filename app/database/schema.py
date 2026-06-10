@@ -282,10 +282,10 @@ def _migrate() -> None:
     staff_cols = {r["name"] for r in db.query_all("PRAGMA table_info(staff)")}
     if "code" not in staff_cols:
         db.execute("ALTER TABLE staff ADD COLUMN code TEXT")
-    # Backfill staff codes for any rows missing one.
+    # Backfill short staff codes for any rows missing one.
     for row in db.query_all("SELECT id FROM staff WHERE code IS NULL OR code = ''"):
         db.execute("UPDATE staff SET code = ? WHERE id = ?",
-                   (f"E-{int(row['id']):06d}", row["id"]))
+                   (str(row["id"]), row["id"]))
 
 
 def _seed_defaults() -> None:

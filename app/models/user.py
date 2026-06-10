@@ -77,6 +77,16 @@ def delete(user_id: int) -> None:
     db.execute("DELETE FROM users WHERE id = ?", (user_id,))
 
 
+def change_password(user_id: int, current: str, new: str) -> bool:
+    """Change a user's own password after verifying the current one."""
+    row = db.query_one("SELECT password_hash FROM users WHERE id = ?", (user_id,))
+    if not row or not verify_password(current, row["password_hash"]):
+        return False
+    db.execute("UPDATE users SET password_hash = ? WHERE id = ?",
+               (hash_password(new), user_id))
+    return True
+
+
 def count() -> int:
     row = db.query_one("SELECT COUNT(*) AS c FROM users")
     return row["c"] if row else 0

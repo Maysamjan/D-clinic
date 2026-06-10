@@ -41,10 +41,33 @@ class Application:
 
         self.login_window = None
         self.main_window = None
+        self.activation_window = None
 
     def run(self) -> int:
-        self._show_login()
+        self._start()
         return self.app.exec()
+
+    def _start(self):
+        """Require product-key activation before anything else."""
+        from app.services import license_service as lic
+
+        if lic.is_activated():
+            self._show_login()
+        else:
+            self._show_activation()
+
+    def _show_activation(self):
+        from app.ui.activation import ActivationWindow
+
+        self.activation_window = ActivationWindow()
+        self.activation_window.activated.connect(self._on_activated)
+        self.activation_window.show()
+
+    def _on_activated(self):
+        if self.activation_window is not None:
+            self.activation_window.close()
+            self.activation_window = None
+        self._show_login()
 
     def _show_login(self):
         from app.ui.login import LoginWindow

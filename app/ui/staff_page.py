@@ -52,6 +52,8 @@ class StaffDialog(QDialog):
         form.setSpacing(13)
         form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
 
+        self.code = QLineEdit()
+        self.code.setPlaceholderText("مثلاً ۱ یا د-۲ (دلخواه)")
         self.full_name = QLineEdit()
         self.position = QComboBox()
         self.position.setEditable(True)
@@ -72,6 +74,7 @@ class StaffDialog(QDialog):
         self.notes = QPlainTextEdit()
         self.notes.setFixedHeight(60)
 
+        form.addRow("آیدی / کود *", self.code)
         form.addRow("نام مکمل *", self.full_name)
         form.addRow("وظیفه", self.position)
         form.addRow("شماره تلفن", self.phone)
@@ -83,6 +86,7 @@ class StaffDialog(QDialog):
         layout.addLayout(form)
 
         if member:
+            self.code.setText(member.get("code", ""))
             self.full_name.setText(member.get("full_name", ""))
             self.position.setCurrentText(member.get("position", ""))
             self.phone.setText(member.get("phone", ""))
@@ -94,6 +98,7 @@ class StaffDialog(QDialog):
             self.is_provider.setChecked(bool(member.get("is_provider")))
             self.notes.setPlainText(member.get("notes", ""))
         else:
+            self.code.setText(staff_model.next_suggested_code())
             self.is_provider.setChecked(True)
 
         buttons = QDialogButtonBox(
@@ -106,8 +111,16 @@ class StaffDialog(QDialog):
         layout.addWidget(buttons)
 
     def _save(self):
+        code = self.code.text().strip()
+        if not code:
+            QMessageBox.warning(self, "خطا", "آیدی / کود الزامی است.")
+            return
         if not self.full_name.text().strip():
             QMessageBox.warning(self, "خطا", "نام مکمل الزامی است.")
+            return
+        exclude = self.member["id"] if self.member else None
+        if staff_model.code_exists(code, exclude_id=exclude):
+            QMessageBox.warning(self, "خطا", "این آیدی قبلاً ثبت شده است.")
             return
         provider = 1 if self.is_provider.isChecked() else 0
         if self.member:
@@ -116,13 +129,14 @@ class StaffDialog(QDialog):
                 self.position.currentText(), self.phone.text(),
                 self.pay_type.currentData(), self.base_salary.value(),
                 self.commission.value(), provider,
-                self.member.get("is_active", 1), self.notes.toPlainText())
+                self.member.get("is_active", 1), self.notes.toPlainText(),
+                code=code)
         else:
             staff_model.create(
                 self.full_name.text(), self.position.currentText(),
                 self.phone.text(), self.pay_type.currentData(),
                 self.base_salary.value(), self.commission.value(),
-                provider, self.notes.toPlainText())
+                provider, self.notes.toPlainText(), code=code)
         self.accept()
 
 

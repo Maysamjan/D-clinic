@@ -29,9 +29,32 @@ PAYMENT_KINDS = {
 # CRUD
 # --------------------------------------------------------------------------
 
+def next_suggested_code() -> str:
+    """Suggest the next short numeric id (highest existing number + 1)."""
+    rows = db.query_all("SELECT code FROM staff WHERE code IS NOT NULL")
+    nums = []
+    for r in rows:
+        digits = "".join(ch for ch in (r["code"] or "") if ch.isdigit())
+        if digits:
+            nums.append(int(digits))
+    return str((max(nums) + 1) if nums else 1)
+
+
+def code_exists(code: str, exclude_id: int | None = None) -> bool:
+    code = (code or "").strip()
+    if not code:
+        return False
+    if exclude_id:
+        row = db.query_one(
+            "SELECT id FROM staff WHERE code = ? AND id != ?", (code, exclude_id))
+    else:
+        row = db.query_one("SELECT id FROM staff WHERE code = ?", (code,))
+    return row is not None
+
+
 def create(full_name: str, position: str, phone: str, pay_type: str,
-           base_salary: float, commission_pct: float,
-           is_provider: int = 0, notes: str = "") -> int:
+           base_salary: float, commission_pct: float, is_provider: int = 0,
+           notes: str = "", code: str = "") -> int:
     sid = db.insert(
         """INSERT INTO staff (full_name, position, phone, pay_type,
            base_salary, commission_pct, is_provider, notes)
@@ -39,14 +62,15 @@ def create(full_name: str, position: str, phone: str, pay_type: str,
         (full_name.strip(), position, phone.strip(), pay_type,
          base_salary, commission_pct, is_provider, notes),
     )
-    db.execute("UPDATE staff SET code = ? WHERE id = ?",
-               (f"E-{sid:06d}", sid))
+    code = (code or "").strip() or str(sid)
+    db.execute("UPDATE staff SET code = ? WHERE id = ?", (code, sid))
     return sid
 
 
 def update(staff_id: int, full_name: str, position: str, phone: str,
            pay_type: str, base_salary: float, commission_pct: float,
-           is_provider: int, is_active: int, notes: str = "") -> None:
+           is_provider: int, is_active: int, notes: str = "",
+           code: str | None = None) -> None:
     db.execute(
         """UPDATE staff SET full_name = ?, position = ?, phone = ?,
            pay_type = ?, base_salary = ?, commission_pct = ?,
@@ -54,6 +78,9 @@ def update(staff_id: int, full_name: str, position: str, phone: str,
         (full_name.strip(), position, phone.strip(), pay_type, base_salary,
          commission_pct, is_provider, is_active, notes, staff_id),
     )
+    if code is not None and code.strip():
+        db.execute("UPDATE staff SET code = ? WHERE id = ?",
+                   (code.strip(), staff_id))
 
 
 def delete(staff_id: int) -> None:
