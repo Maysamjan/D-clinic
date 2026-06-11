@@ -11,6 +11,7 @@ from PyQt6.QtGui import QColor, QFont, QPainter, QPen, QPolygonF, QBrush
 from PyQt6.QtWidgets import QWidget
 
 from ...services import jalali
+from ...services.i18n import t
 
 _BLUE = QColor("#2563eb")
 _GREEN = QColor("#16a34a")
@@ -49,7 +50,7 @@ class BarChart(QWidget):
 
         if not self._data:
             p.setPen(_TEXT)
-            p.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "داده‌ای موجود نیست")
+            p.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, t("داده‌ای موجود نیست"))
             return
 
         max_val = max((v for _, v in self._data), default=0) or 1
@@ -107,7 +108,7 @@ class LineChart(QWidget):
 
         if not self._data:
             p.setPen(_TEXT)
-            p.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "داده‌ای موجود نیست")
+            p.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, t("داده‌ای موجود نیست"))
             return
 
         max_val = max((v for _, v in self._data), default=0) or 1
@@ -177,7 +178,7 @@ class HBarChart(QWidget):
 
         if not self._data:
             p.setPen(_TEXT)
-            p.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "داده‌ای موجود نیست")
+            p.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, t("داده‌ای موجود نیست"))
             return
 
         max_val = max((v for _, v in self._data), default=0) or 1

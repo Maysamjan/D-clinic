@@ -13,6 +13,7 @@ from ..models import invoice as invoice_model
 from ..models import service_price as service_model
 from ..services import session
 from ..utils import helpers
+from ..services.i18n import t
 
 
 class InvoiceDialog(QDialog):
@@ -20,8 +21,7 @@ class InvoiceDialog(QDialog):
         super().__init__(parent)
         self.patient_id = patient_id
         self.invoice_id = None
-        self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
-        self.setWindowTitle("صدور صورتحساب")
+        self.setWindowTitle(t("صدور صورتحساب"))
         self.setMinimumWidth(520)
         self._build()
 
@@ -31,17 +31,17 @@ class InvoiceDialog(QDialog):
         # Add-item row
         add_row = QHBoxLayout()
         self.service = QComboBox()
-        self.service.addItem("— خدمت سفارشی —", None)
+        self.service.addItem(t("— خدمت سفارشی —"), None)
         for s in service_model.all_active():
             self.service.addItem(s["name"], s["price"])
         self.service.currentIndexChanged.connect(self._on_service_changed)
         self.desc = QLineEdit()
-        self.desc.setPlaceholderText("شرح خدمت")
+        self.desc.setPlaceholderText(t("شرح خدمت"))
         self.amount = QDoubleSpinBox()
         self.amount.setRange(0, 100_000_000)
         self.amount.setSingleStep(100)
         self.amount.setGroupSeparatorShown(True)
-        add_btn = QPushButton("افزودن")
+        add_btn = QPushButton(t("افزودن"))
         add_btn.setObjectName("Success")
         add_btn.clicked.connect(self._add_item)
         add_row.addWidget(self.service)
@@ -52,7 +52,7 @@ class InvoiceDialog(QDialog):
 
         # Items table
         self.table = QTableWidget(0, 3)
-        self.table.setHorizontalHeaderLabels(["شرح", "مبلغ", ""])
+        self.table.setHorizontalHeaderLabels([t("شرح"), t("مبلغ"), ""])
         self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.horizontalHeader().setStretchLastSection(False)
@@ -64,12 +64,12 @@ class InvoiceDialog(QDialog):
 
         # Total + paid
         bottom = QHBoxLayout()
-        self.total_label = QLabel("مجموع: ۰ افغانی")
+        self.total_label = QLabel(t("مجموع: ۰ افغانی"))
         self.total_label.setStyleSheet(
             "font-size:16px; font-weight:bold; color:#2563eb;")
         bottom.addWidget(self.total_label)
         bottom.addStretch(1)
-        bottom.addWidget(QLabel("پرداخت شده:"))
+        bottom.addWidget(QLabel(t("پرداخت شده:")))
         self.paid = QDoubleSpinBox()
         self.paid.setRange(0, 100_000_000)
         self.paid.setSingleStep(100)
@@ -78,7 +78,7 @@ class InvoiceDialog(QDialog):
         layout.addLayout(bottom)
 
         self.notes = QLineEdit()
-        self.notes.setPlaceholderText("یادداشت (اختیاری)")
+        self.notes.setPlaceholderText(t("یادداشت (اختیاری)"))
         layout.addWidget(self.notes)
 
         buttons = QDialogButtonBox(
@@ -101,7 +101,7 @@ class InvoiceDialog(QDialog):
         desc = self.desc.text().strip()
         amount = self.amount.value()
         if not desc:
-            QMessageBox.warning(self, "خطا", "شرح خدمت را وارد کنید.")
+            QMessageBox.warning(self, t("خطا"), t("شرح خدمت را وارد کنید."))
             return
         r = self.table.rowCount()
         self.table.insertRow(r)
@@ -139,7 +139,7 @@ class InvoiceDialog(QDialog):
     def _save(self):
         items = self._items()
         if not items:
-            QMessageBox.warning(self, "خطا", "حداقل یک ردیف خدمت اضافه کنید.")
+            QMessageBox.warning(self, t("خطا"), t("حداقل یک ردیف خدمت اضافه کنید."))
             return
         uid = session.current_user["id"] if session.current_user else None
         self.invoice_id = invoice_model.create(

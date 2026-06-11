@@ -8,6 +8,17 @@ from ..database import db
 from . import patient, payment, visit
 
 
+def _month_label(gy: int, gm: int) -> str:
+    """Month label following the active language (Jalali fa / Gregorian en)."""
+    from ..services import i18n, jalali
+    if i18n.get_language() == "en":
+        names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        return f"{names[gm - 1]} {gy}"
+    jy, jm, _ = jalali.gregorian_to_jalali(gy, gm, 15)
+    return jalali.to_persian_digits(f"{jalali.jalali_month_name(jm)} {jy}")
+
+
 def dashboard_summary() -> dict:
     """Return the key metrics shown on the dashboard cards."""
     today = datetime.date.today()
@@ -53,9 +64,7 @@ def monthly_revenue(months: int = 6) -> list[tuple[str, float]]:
         else:
             end = datetime.date(y, m + 1, 1) - datetime.timedelta(days=1)
         amount = payment.total_between(start.isoformat(), end.isoformat())
-        jy, jm, _ = jalali.gregorian_to_jalali(y, m, 15)
-        label = jalali.to_persian_digits(f"{jalali.jalali_month_name(jm)} {jy}")
-        result.append((label, amount))
+        result.append((_month_label(y, m), amount))
     return result
 
 
@@ -84,9 +93,7 @@ def patient_growth(months: int = 6) -> list[tuple[str, int]]:
             "SELECT COUNT(*) AS c FROM patients WHERE registered_at BETWEEN ? AND ?",
             (start.isoformat(), end.isoformat()),
         )
-        jy, jm, _ = jalali.gregorian_to_jalali(y, m, 15)
-        label = jalali.to_persian_digits(f"{jalali.jalali_month_name(jm)} {jy}")
-        result.append((label, row["c"] if row else 0))
+        result.append((_month_label(y, m), row["c"] if row else 0))
     return result
 
 

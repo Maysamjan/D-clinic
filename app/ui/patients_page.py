@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
 from ..models import patient as patient_model
 from ..services import session
 from ..utils import helpers
+from ..services.i18n import t
 from .dialogs import PatientDialog
 from .widgets.actions import actions_cell, make_button, prepare_table
 
@@ -28,12 +29,12 @@ class PatientsPage(QWidget):
         bar = QHBoxLayout()
         bar.setSpacing(10)
         self.search = QLineEdit()
-        self.search.setPlaceholderText("🔍  جستجو با نام، شماره تلفن یا کود مریض ...")
+        self.search.setPlaceholderText(t("🔍  جستجو با نام، شماره تلفن یا کود مریض ..."))
         self.search.setMinimumHeight(42)
         self.search.textChanged.connect(self.refresh)
         bar.addWidget(self.search, 1)
 
-        self.add_btn = QPushButton("➕ مریض جدید")
+        self.add_btn = QPushButton(t("➕ مریض جدید"))
         self.add_btn.setMinimumHeight(42)
         self.add_btn.clicked.connect(self._add_patient)
         bar.addWidget(self.add_btn)
@@ -46,7 +47,7 @@ class PatientsPage(QWidget):
         # Table
         self.table = QTableWidget(0, 7)
         self.table.setHorizontalHeaderLabels([
-            "کود", "نام مکمل", "تلفن", "جنسیت", "سن", "تاریخ ثبت", "عملیات"
+            t("کود"), t("نام مکمل"), t("تلفن"), t("جنسیت"), t("سن"), t("تاریخ ثبت"), t("عملیات")
         ])
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(
@@ -80,7 +81,7 @@ class PatientsPage(QWidget):
         term = self.search.text()
         patients = patient_model.search(term)
         self.count_label.setText(
-            helpers.jalali_digits(len(patients)) + " مریض یافت شد")
+            helpers.jalali_digits(len(patients)) + " " + t("مریض یافت شد"))
         self.table.setRowCount(0)
         for p in patients:
             r = self.table.rowCount()

@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
 from ..models import staff as staff_model
 from ..services import jalali, session
 from ..utils import helpers, printing
+from ..services.i18n import t
 from .widgets.actions import actions_cell, make_button, prepare_table
 from .widgets.dialog_header import dialog_header
 from .widgets.jalali_date_edit import JalaliDateEdit
@@ -42,8 +43,7 @@ class SalaryDialog(QDialog):
         super().__init__(parent)
         self.member = member or {}
         self.payment_id = None
-        self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
-        self.setWindowTitle("پرداخت معاش")
+        self.setWindowTitle(t("پرداخت معاش"))
         self.setMinimumWidth(420)
 
         outer = QVBoxLayout(self)
@@ -74,16 +74,16 @@ class SalaryDialog(QDialog):
         self.amount.setSuffix(" افغانی")
         self.amount.setValue(max(suggested, 0))
         self.method = QComboBox()
-        self.method.addItem("نقدی", "cash")
-        self.method.addItem("انتقال بانکی", "bank")
+        self.method.addItem(t("نقدی"), "cash")
+        self.method.addItem(t("انتقال بانکی"), "bank")
         self.date = JalaliDateEdit()
         self.note = QLineEdit()
 
-        form.addRow("دوره", self.period)
-        form.addRow("مبلغ معاش *", self.amount)
-        form.addRow("روش پرداخت", self.method)
-        form.addRow("تاریخ", self.date)
-        form.addRow("یادداشت", self.note)
+        form.addRow(t("دوره"), self.period)
+        form.addRow(t("مبلغ معاش *"), self.amount)
+        form.addRow(t("روش پرداخت"), self.method)
+        form.addRow(t("تاریخ"), self.date)
+        form.addRow(t("یادداشت"), self.note)
         wrap.addLayout(form)
 
         buttons = QDialogButtonBox(
@@ -97,7 +97,7 @@ class SalaryDialog(QDialog):
 
     def _save(self):
         if self.amount.value() <= 0:
-            QMessageBox.warning(self, "خطا", "مبلغ معاش باید بیشتر از صفر باشد.")
+            QMessageBox.warning(self, t("خطا"), t("مبلغ معاش باید بیشتر از صفر باشد."))
             return
         uid = session.current_user["id"] if session.current_user else None
         self.payment_id = staff_model.add_payment(
@@ -121,7 +121,7 @@ class SalaryPage(QWidget):
         # Period + search toolbar
         bar = QHBoxLayout()
         bar.setSpacing(10)
-        bar.addWidget(QLabel("دوره معاش:"))
+        bar.addWidget(QLabel(t("دوره معاش:")))
         self.month = QComboBox()
         for m in range(1, 13):
             self.month.addItem(jalali.jalali_month_name(m), m)
@@ -137,7 +137,7 @@ class SalaryPage(QWidget):
         bar.addWidget(self.year)
 
         self.search = QLineEdit()
-        self.search.setPlaceholderText("🔍  جستجوی کارمند با نام، کود یا وظیفه ...")
+        self.search.setPlaceholderText(t("🔍  جستجوی کارمند با نام، کود یا وظیفه ..."))
         self.search.setMinimumHeight(42)
         self.search.textChanged.connect(self.refresh)
         bar.addWidget(self.search, 1)
@@ -149,8 +149,8 @@ class SalaryPage(QWidget):
 
         self.table = QTableWidget(0, 8)
         self.table.setHorizontalHeaderLabels([
-            "کود", "نام", "وظیفه", "معاش ماهانه", "پرداخت‌شده (دوره)",
-            "باقیمانده", "وضعیت", "عملیات"])
+            t("کود"), t("نام"), t("وظیفه"), t("معاش ماهانه"), t("پرداخت‌شده (دوره)"),
+            t("باقیمانده"), t("وضعیت"), t("عملیات")])
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(
             QAbstractItemView.SelectionBehavior.SelectRows)
@@ -174,7 +174,7 @@ class SalaryPage(QWidget):
         if dlg.exec():
             self.refresh()
             if dlg.payment_id and QMessageBox.question(
-                self, "رسید", "رسید پرداخت معاش چاپ شود؟"
+                self, t("رسید"), t("رسید پرداخت معاش چاپ شود؟")
             ) == QMessageBox.StandardButton.Yes:
                 printing.print_or_pdf(
                     self, printing.staff_receipt_html(dlg.payment_id),
@@ -205,13 +205,13 @@ class SalaryPage(QWidget):
                 helpers.format_money(remaining)))
             # status
             if base <= 0:
-                status, color = "بدون معاش ثابت", "#64748B"
+                status, color = t("بدون معاش ثابت"), "#64748B"
             elif paid <= 0:
-                status, color = "پرداخت‌نشده", "#E11D48"
+                status, color = t("پرداخت‌نشده"), "#E11D48"
             elif remaining > 0.5:
-                status, color = "ناقص", "#D97706"
+                status, color = t("ناقص"), "#D97706"
             else:
-                status, color = "پرداخت‌شده", "#0C7A43"
+                status, color = t("پرداخت‌شده"), "#0C7A43"
             st = QTableWidgetItem(status)
             from PyQt6.QtGui import QColor
             st.setForeground(QColor(color))

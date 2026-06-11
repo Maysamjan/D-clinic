@@ -21,6 +21,7 @@ from ..models import patient as patient_model
 from ..models import visit as visit_model
 from ..services import session
 from ..utils import helpers
+from ..services.i18n import t
 from .widgets.dialog_header import setup_form_dialog
 from .widgets.jalali_date_edit import JalaliDateEdit
 
@@ -33,7 +34,6 @@ class PatientDialog(QDialog):
     def __init__(self, parent=None, patient: dict | None = None):
         super().__init__(parent)
         self.patient = patient
-        self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.setWindowTitle("ویرایش مریض" if patient else "ثبت مریض جدید")
         self.setMinimumWidth(440)
         self._build()
@@ -52,8 +52,8 @@ class PatientDialog(QDialog):
         self.full_name = QLineEdit()
         self.phone = QLineEdit()
         self.gender = QComboBox()
-        self.gender.addItem("مرد", "male")
-        self.gender.addItem("زن", "female")
+        self.gender.addItem(t("مرد"), "male")
+        self.gender.addItem(t("زن"), "female")
         self.age = QSpinBox()
         self.age.setRange(0, 130)
         self.address = QLineEdit()
@@ -62,22 +62,22 @@ class PatientDialog(QDialog):
         for bt in ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]:
             self.blood_type.addItem(bt, bt)
         self.allergies = QLineEdit()
-        self.allergies.setPlaceholderText("مثلاً حساسیت به پنسلین (در صورت وجود)")
+        self.allergies.setPlaceholderText(t("مثلاً حساسیت به پنسلین (در صورت وجود)"))
         self.medical_history = QPlainTextEdit()
         self.medical_history.setFixedHeight(52)
-        self.medical_history.setPlaceholderText("بیماری‌های زمینه‌ای: فشار خون، دیابت، قلبی ...")
+        self.medical_history.setPlaceholderText(t("بیماری‌های زمینه‌ای: فشار خون، دیابت، قلبی ..."))
         self.notes = QPlainTextEdit()
         self.notes.setFixedHeight(52)
 
-        form.addRow("نام مکمل *", self.full_name)
-        form.addRow("شماره تلفن", self.phone)
-        form.addRow("جنسیت", self.gender)
-        form.addRow("سن", self.age)
-        form.addRow("آدرس", self.address)
-        form.addRow("گروه خون", self.blood_type)
-        form.addRow("⚠ حساسیت‌ها", self.allergies)
-        form.addRow("سوابق طبی", self.medical_history)
-        form.addRow("یادداشت", self.notes)
+        form.addRow(t("نام مکمل *"), self.full_name)
+        form.addRow(t("شماره تلفن"), self.phone)
+        form.addRow(t("جنسیت"), self.gender)
+        form.addRow(t("سن"), self.age)
+        form.addRow(t("آدرس"), self.address)
+        form.addRow(t("گروه خون"), self.blood_type)
+        form.addRow(t("⚠ حساسیت‌ها"), self.allergies)
+        form.addRow(t("سوابق طبی"), self.medical_history)
+        form.addRow(t("یادداشت"), self.notes)
         layout.addLayout(form)
 
         buttons = QDialogButtonBox(
@@ -109,7 +109,7 @@ class PatientDialog(QDialog):
     def _save(self):
         name = self.full_name.text().strip()
         if not name:
-            QMessageBox.warning(self, "خطا", "نام مریض الزامی است.")
+            QMessageBox.warning(self, t("خطا"), t("نام مریض الزامی است."))
             return
         age = self.age.value() or None
         if self.patient:
@@ -142,7 +142,6 @@ class VisitDialog(QDialog):
         self.patient_id = patient_id
         self.visit = visit
         self._pending_files: list[str] = []
-        self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.setWindowTitle("ویرایش ویزیت" if visit else "ثبت ویزیت / معالجه")
         self.setMinimumWidth(460)
         self._build()
@@ -160,13 +159,13 @@ class VisitDialog(QDialog):
         self.date = JalaliDateEdit()
 
         self.treatment = QComboBox()
-        self.treatment.addItem("— انتخاب کنید —", None)
-        for t in treatment_model.all_active():
-            self.treatment.addItem(t["name"], t["id"])
+        self.treatment.addItem(t("— انتخاب کنید —"), None)
+        for tr in treatment_model.all_active():
+            self.treatment.addItem(tr["name"], tr["id"])
         self.treatment.currentIndexChanged.connect(self._on_treatment_changed)
 
         self.tooth = QLineEdit()
-        self.tooth.setPlaceholderText("مثلاً ۲۶")
+        self.tooth.setPlaceholderText(t("مثلاً ۲۶"))
 
         # Treatment provider — pulled from the staff registry so the visit
         # can be attributed for commission/payroll.
@@ -184,19 +183,19 @@ class VisitDialog(QDialog):
         self.notes = QPlainTextEdit()
         self.notes.setFixedHeight(70)
 
-        form.addRow("تاریخ ویزیت *", self.date)
-        form.addRow("نوع معالجه", self.treatment)
-        form.addRow("شماره دندان", self.tooth)
-        form.addRow("داکتر", self.doctor)
-        form.addRow("هزینه", self.cost)
-        form.addRow("یادداشت", self.notes)
+        form.addRow(t("تاریخ ویزیت *"), self.date)
+        form.addRow(t("نوع معالجه"), self.treatment)
+        form.addRow(t("شماره دندان"), self.tooth)
+        form.addRow(t("داکتر"), self.doctor)
+        form.addRow(t("هزینه"), self.cost)
+        form.addRow(t("یادداشت"), self.notes)
         layout.addLayout(form)
 
         # Attachments section
         att_header = QHBoxLayout()
-        att_header.addWidget(QLabel("ضمیمه‌ها (اختیاری)"))
+        att_header.addWidget(QLabel(t("ضمیمه‌ها (اختیاری)")))
         att_header.addStretch(1)
-        add_file_btn = QPushButton("➕ افزودن فایل")
+        add_file_btn = QPushButton(t("➕ افزودن فایل"))
         add_file_btn.setObjectName("Secondary")
         add_file_btn.clicked.connect(self._add_files)
         att_header.addWidget(add_file_btn)
@@ -206,7 +205,7 @@ class VisitDialog(QDialog):
         self.att_list.setFixedHeight(110)
         layout.addWidget(self.att_list)
 
-        remove_btn = QPushButton("حذف فایل انتخاب‌شده")
+        remove_btn = QPushButton(t("حذف فایل انتخاب‌شده"))
         remove_btn.setObjectName("Danger")
         remove_btn.clicked.connect(self._remove_selected_file)
         layout.addWidget(remove_btn)
@@ -224,9 +223,9 @@ class VisitDialog(QDialog):
     def _on_treatment_changed(self):
         tid = self.treatment.currentData()
         if tid:
-            t = treatment_model.get(tid)
-            if t and self.cost.value() == 0:
-                self.cost.setValue(float(t["default_price"]))
+            tr = treatment_model.get(tid)
+            if tr and self.cost.value() == 0:
+                self.cost.setValue(float(tr["default_price"]))
 
     def _add_files(self):
         files, _ = QFileDialog.getOpenFileNames(
@@ -248,7 +247,7 @@ class VisitDialog(QDialog):
             self._pending_files.remove(ref)
         elif kind == "saved":
             if QMessageBox.question(
-                self, "حذف", "این فایل به‌صورت دائمی حذف شود؟"
+                self, t("حذف"), t("این فایل به‌صورت دائمی حذف شود؟")
             ) == QMessageBox.StandardButton.Yes:
                 attachment_model.delete(ref)
             else:
@@ -281,7 +280,7 @@ class VisitDialog(QDialog):
     def _save(self):
         iso = self.date.iso_date()
         if not iso:
-            QMessageBox.warning(self, "خطا", "تاریخ ویزیت نامعتبر است.")
+            QMessageBox.warning(self, t("خطا"), t("تاریخ ویزیت نامعتبر است."))
             return
         tname = self.treatment.currentText() if self.treatment.currentData() \
             or self.treatment.currentIndex() > 0 else ""
@@ -318,7 +317,7 @@ class PaymentDialog(QDialog):
     def __init__(self, parent=None, patient_id: int = 0, balance: float = 0):
         super().__init__(parent)
         self.patient_id = patient_id
-        self.setWindowTitle("ثبت پرداخت")
+        self.setWindowTitle(t("ثبت پرداخت"))
         self.setMinimumWidth(400)
         sub = ("باقیمانده فعلی: " + helpers.format_money(balance)
                if balance > 0 else "ثبت پرداخت مریض")
@@ -335,15 +334,15 @@ class PaymentDialog(QDialog):
         if balance > 0:
             self.amount.setValue(balance)
         self.method = QComboBox()
-        self.method.addItem("نقدی", "cash")
-        self.method.addItem("کارت / انتقال", "card")
+        self.method.addItem(t("نقدی"), "cash")
+        self.method.addItem(t("کارت / انتقال"), "card")
         self.date = JalaliDateEdit()
         self.notes = QLineEdit()
 
-        form.addRow("مبلغ پرداخت *", self.amount)
-        form.addRow("روش پرداخت", self.method)
-        form.addRow("تاریخ", self.date)
-        form.addRow("یادداشت", self.notes)
+        form.addRow(t("مبلغ پرداخت *"), self.amount)
+        form.addRow(t("روش پرداخت"), self.method)
+        form.addRow(t("تاریخ"), self.date)
+        form.addRow(t("یادداشت"), self.notes)
         layout.addLayout(form)
 
         buttons = QDialogButtonBox(
@@ -358,7 +357,7 @@ class PaymentDialog(QDialog):
 
     def _save(self):
         if self.amount.value() <= 0:
-            QMessageBox.warning(self, "خطا", "مبلغ پرداخت باید بیشتر از صفر باشد.")
+            QMessageBox.warning(self, t("خطا"), t("مبلغ پرداخت باید بیشتر از صفر باشد."))
             return
         iso = self.date.iso_date()
         uid = session.current_user["id"] if session.current_user else None

@@ -30,9 +30,13 @@ class Application:
         except Exception:  # noqa: BLE001 — never block startup on backup
             pass
 
+        from app.services import i18n
+        from app.models import clinic as clinic_model
+        i18n.set_language(clinic_model.get_language())
+
         self.app = QApplication(sys.argv)
         self.app.setApplicationName(config.APP_NAME)
-        self.app.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
+        self._apply_direction()
         family = helpers.load_fonts()
         font = QFont(family, 11)
         font.setHintingPreference(QFont.HintingPreference.PreferFullHinting)
@@ -42,6 +46,12 @@ class Application:
         self.login_window = None
         self.main_window = None
         self.activation_window = None
+
+    def _apply_direction(self):
+        from app.services import i18n
+        self.app.setLayoutDirection(
+            Qt.LayoutDirection.RightToLeft if i18n.is_rtl()
+            else Qt.LayoutDirection.LeftToRight)
 
     def run(self) -> int:
         self._start()
@@ -85,8 +95,22 @@ class Application:
         if self.login_window is not None:
             self.login_window.close()
             self.login_window = None
-        self.main_window = MainWindow(on_logout=self._show_login)
+        if self.main_window is not None:
+            self.main_window.close()
+            self.main_window = None
+        self.main_window = MainWindow(
+            on_logout=self._show_login, on_relaunch=self._relaunch)
         self.main_window.show()
+
+    def _relaunch(self):
+        """Rebuild the main window after a language change."""
+        from app.services import i18n, session
+        from app.models import clinic as clinic_model
+        i18n.set_language(clinic_model.get_language())
+        self._apply_direction()
+        self.app.setStyleSheet(helpers.load_stylesheet())
+        if session.current_user:
+            self._show_main(session.current_user)
 
 
 def main() -> int:

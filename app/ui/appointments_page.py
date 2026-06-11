@@ -17,6 +17,7 @@ from ..models import patient as patient_model
 from ..models import staff as staff_model
 from ..services import jalali
 from ..utils import helpers
+from ..services.i18n import t
 from .widgets.actions import actions_cell, make_button, prepare_table
 from .widgets.dialog_header import setup_form_dialog
 from .widgets.jalali_date_edit import JalaliDateEdit
@@ -45,7 +46,7 @@ class AppointmentDialog(QDialog):
 
         self.patient = QComboBox()
         self.patient.setEditable(True)
-        self.patient.addItem("— مریض جدید / مراجعه‌کننده —", None)
+        self.patient.addItem(t("— مریض جدید / مراجعه‌کننده —"), None)
         for p in patient_model.search("", limit=1000):
             label = p["full_name"] + (" — " + helpers.jalali_digits(p["phone"])
                                       if p.get("phone") else "")
@@ -68,14 +69,14 @@ class AppointmentDialog(QDialog):
         self.notes = QPlainTextEdit()
         self.notes.setFixedHeight(50)
 
-        form.addRow("مریض", self.patient)
-        form.addRow("نام (در صورت جدید)", self.name)
-        form.addRow("تلفن", self.phone)
-        form.addRow("تاریخ *", self.date)
-        form.addRow("ساعت", self.time)
-        form.addRow("داکتر", self.doctor)
-        form.addRow("علت مراجعه", self.reason)
-        form.addRow("یادداشت", self.notes)
+        form.addRow(t("مریض"), self.patient)
+        form.addRow(t("نام (در صورت جدید)"), self.name)
+        form.addRow(t("تلفن"), self.phone)
+        form.addRow(t("تاریخ *"), self.date)
+        form.addRow(t("ساعت"), self.time)
+        form.addRow(t("داکتر"), self.doctor)
+        form.addRow(t("علت مراجعه"), self.reason)
+        form.addRow(t("یادداشت"), self.notes)
         layout.addLayout(form)
 
         if appt:
@@ -121,12 +122,12 @@ class AppointmentDialog(QDialog):
     def _save(self):
         iso = self.date.iso_date()
         if not iso:
-            QMessageBox.warning(self, "خطا", "تاریخ نامعتبر است.")
+            QMessageBox.warning(self, t("خطا"), t("تاریخ نامعتبر است."))
             return
         pid = self.patient.currentData()
         name = self.name.text().strip() or self.patient.currentText()
         if not name:
-            QMessageBox.warning(self, "خطا", "نام مریض را وارد کنید.")
+            QMessageBox.warning(self, t("خطا"), t("نام مریض را وارد کنید."))
             return
         staff_id = self.doctor.currentData()
         doctor_name = self.doctor.currentText() if staff_id else ""
@@ -155,13 +156,13 @@ class AppointmentsPage(QWidget):
 
         bar = QHBoxLayout()
         bar.setSpacing(10)
-        prev_btn = QPushButton("‹ روز قبل")
+        prev_btn = QPushButton(t("‹ روز قبل"))
         prev_btn.setObjectName("Secondary")
         prev_btn.clicked.connect(lambda: self._shift(-1))
-        next_btn = QPushButton("روز بعد ›")
+        next_btn = QPushButton(t("روز بعد ›"))
         next_btn.setObjectName("Secondary")
         next_btn.clicked.connect(lambda: self._shift(1))
-        today_btn = QPushButton("امروز")
+        today_btn = QPushButton(t("امروز"))
         today_btn.setObjectName("Secondary")
         today_btn.clicked.connect(self._go_today)
         self.date_label = QLabel()
@@ -171,7 +172,7 @@ class AppointmentsPage(QWidget):
         bar.addWidget(today_btn)
         bar.addWidget(next_btn)
         bar.addWidget(self.date_label, 1, Qt.AlignmentFlag.AlignCenter)
-        add_btn = QPushButton("➕ نوبت جدید")
+        add_btn = QPushButton(t("➕ نوبت جدید"))
         add_btn.setMinimumHeight(42)
         add_btn.clicked.connect(self._add)
         bar.addWidget(add_btn)
@@ -183,7 +184,7 @@ class AppointmentsPage(QWidget):
 
         self.table = QTableWidget(0, 7)
         self.table.setHorizontalHeaderLabels([
-            "ساعت", "مریض", "تلفن", "داکتر", "علت مراجعه", "وضعیت", "عملیات"])
+            t("ساعت"), t("مریض"), t("تلفن"), t("داکتر"), t("علت مراجعه"), t("وضعیت"), t("عملیات")])
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(
             QAbstractItemView.SelectionBehavior.SelectRows)
@@ -222,17 +223,17 @@ class AppointmentsPage(QWidget):
 
     def _delete(self, aid):
         if QMessageBox.question(
-            self, "حذف", "این نوبت حذف شود؟"
+            self, t("حذف"), t("این نوبت حذف شود؟")
         ) == QMessageBox.StandardButton.Yes:
             appt_model.delete(aid)
             self.refresh()
 
     def refresh(self):
         iso = self._date.isoformat()
-        self.date_label.setText("📅  " + jalali.long_jalali(iso))
+        self.date_label.setText("📅  " + helpers.long_date(iso))
         appts = appt_model.for_date(iso)
         self.count_label.setText(
-            f"{helpers.jalali_digits(len(appts))} نوبت در این روز")
+            helpers.jalali_digits(len(appts)) + " " + t("نوبت در این روز"))
         self.table.setRowCount(0)
         for a in appts:
             r = self.table.rowCount()
@@ -244,8 +245,8 @@ class AppointmentsPage(QWidget):
                 helpers.jalali_digits(a.get("phone", "")) or "—"))
             self.table.setItem(r, 3, QTableWidgetItem(a.get("doctor_name") or "—"))
             self.table.setItem(r, 4, QTableWidgetItem(a.get("reason") or "—"))
-            st = QTableWidgetItem(appt_model.STATUSES.get(
-                a.get("status"), a.get("status", "")))
+            st = QTableWidgetItem(t(appt_model.STATUSES.get(
+                a.get("status"), a.get("status", ""))))
             st.setForeground(QColor(_STATUS_COLORS.get(a.get("status"), "#334155")))
             self.table.setItem(r, 5, st)
             self.table.setCellWidget(r, 6, self._actions(a))

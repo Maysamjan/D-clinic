@@ -19,11 +19,15 @@ from ..models import clinic as clinic_model
 from ..models import user as user_model
 from ..services import backup_service, session
 from ..utils import helpers
+from PyQt6.QtWidgets import QComboBox
+from ..services import i18n
+from ..services.i18n import t
 
 
 class SettingsPage(QWidget):
     clinic_updated = pyqtSignal()
     data_restored = pyqtSignal()
+    language_changed = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -50,22 +54,33 @@ class SettingsPage(QWidget):
         lay.setContentsMargins(20, 20, 20, 20)
         lay.setSpacing(12)
 
-        title = QLabel("تنظیمات کلینیک")
+        title = QLabel(t("تنظیمات کلینیک"))
         title.setObjectName("CardTitle")
         lay.addWidget(title)
 
+        lang_row = QHBoxLayout()
+        lang_row.addWidget(QLabel(t("زبان برنامه") + ":"))
+        self.language = QComboBox()
+        self.language.addItem("فارسی / دری", "fa")
+        self.language.addItem("English", "en")
+        _li = self.language.findData(i18n.get_language())
+        if _li >= 0:
+            self.language.setCurrentIndex(_li)
+        lang_row.addWidget(self.language, 1)
+        lay.addLayout(lang_row)
+
         # Logo
         logo_row = QHBoxLayout()
-        self.logo_preview = QLabel("بدون لوگو")
+        self.logo_preview = QLabel(t("بدون لوگو"))
         self.logo_preview.setFixedSize(96, 96)
         self.logo_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.logo_preview.setStyleSheet(
             "border:1px dashed #cfd8e3; border-radius:12px; color:#94a3b8;")
         logo_btns = QVBoxLayout()
-        pick_btn = QPushButton("انتخاب لوگو")
+        pick_btn = QPushButton(t("انتخاب لوگو"))
         pick_btn.setObjectName("Secondary")
         pick_btn.clicked.connect(self._pick_logo)
-        clear_btn = QPushButton("حذف لوگو")
+        clear_btn = QPushButton(t("حذف لوگو"))
         clear_btn.setObjectName("Secondary")
         clear_btn.clicked.connect(self._clear_logo)
         logo_btns.addWidget(pick_btn)
@@ -83,14 +98,14 @@ class SettingsPage(QWidget):
         self.phone = QLineEdit()
         self.address = QLineEdit()
         self.email = QLineEdit()
-        form.addRow("نام کلینیک *", self.name)
-        form.addRow("نام داکتر / مالک", self.owner)
-        form.addRow("شماره تلفن", self.phone)
-        form.addRow("آدرس", self.address)
-        form.addRow("ایمیل (اختیاری)", self.email)
+        form.addRow(t("نام کلینیک *"), self.name)
+        form.addRow(t("نام داکتر / مالک"), self.owner)
+        form.addRow(t("شماره تلفن"), self.phone)
+        form.addRow(t("آدرس"), self.address)
+        form.addRow(t("ایمیل (اختیاری)"), self.email)
         lay.addLayout(form)
 
-        save_btn = QPushButton("ذخیره تنظیمات")
+        save_btn = QPushButton(t("ذخیره تنظیمات"))
         save_btn.clicked.connect(self._save_clinic)
         lay.addWidget(save_btn)
         lay.addStretch(1)
@@ -103,26 +118,24 @@ class SettingsPage(QWidget):
         lay.setContentsMargins(20, 20, 20, 20)
         lay.setSpacing(12)
 
-        title = QLabel("پشتیبان‌گیری و بازیابی")
+        title = QLabel(t("پشتیبان‌گیری و بازیابی"))
         title.setObjectName("CardTitle")
         lay.addWidget(title)
 
-        desc = QLabel(
-            "نسخه پشتیبان به‌صورت خودکار هر روز گرفته می‌شود. "
-            "می‌توانید به‌صورت دستی نیز پشتیبان بگیرید یا اطلاعات را بازیابی کنید."
-        )
+        desc = QLabel(t("نسخه پشتیبان به‌صورت خودکار هر روز گرفته می‌شود. "
+            "می‌توانید به‌صورت دستی نیز پشتیبان بگیرید یا اطلاعات را بازیابی کنید."))
         desc.setWordWrap(True)
         desc.setStyleSheet("color:#64748b;")
         lay.addWidget(desc)
 
         btn_row = QHBoxLayout()
-        backup_btn = QPushButton("💾 پشتیبان‌گیری اکنون")
+        backup_btn = QPushButton(t("💾 پشتیبان‌گیری اکنون"))
         backup_btn.setObjectName("Success")
         backup_btn.clicked.connect(self._manual_backup)
-        export_btn = QPushButton("📤 ذخیره در محل دلخواه")
+        export_btn = QPushButton(t("📤 ذخیره در محل دلخواه"))
         export_btn.setObjectName("Secondary")
         export_btn.clicked.connect(self._export_backup)
-        restore_btn = QPushButton("♻ بازیابی از فایل")
+        restore_btn = QPushButton(t("♻ بازیابی از فایل"))
         restore_btn.setObjectName("Danger")
         restore_btn.clicked.connect(self._restore_backup)
         btn_row.addWidget(backup_btn)
@@ -130,9 +143,9 @@ class SettingsPage(QWidget):
         btn_row.addWidget(restore_btn)
         lay.addLayout(btn_row)
 
-        lay.addWidget(QLabel("تاریخچه پشتیبان‌ها:"))
+        lay.addWidget(QLabel(t("تاریخچه پشتیبان‌ها:")))
         self.backups_table = QTableWidget(0, 4)
-        self.backups_table.setHorizontalHeaderLabels(["تاریخ", "نوع", "حجم", "وضعیت"])
+        self.backups_table.setHorizontalHeaderLabels([t("تاریخ"), t("نوع"), t("حجم"), t("وضعیت")])
         self.backups_table.verticalHeader().setVisible(False)
         self.backups_table.setEditTriggers(
             QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -148,11 +161,11 @@ class SettingsPage(QWidget):
         lay.setContentsMargins(20, 18, 20, 18)
         lay.setSpacing(10)
 
-        title = QLabel("تغییر رمز عبور")
+        title = QLabel(t("تغییر رمز عبور"))
         title.setObjectName("CardTitle")
         lay.addWidget(title)
         who = session.current_user or {}
-        sub = QLabel("کاربر: " + (who.get("full_name") or who.get("username", "")))
+        sub = QLabel(t("کاربر: ") + (who.get("full_name") or who.get("username", "")))
         sub.setObjectName("SectionHint")
         lay.addWidget(sub)
 
@@ -165,12 +178,12 @@ class SettingsPage(QWidget):
         self.new_pw.setEchoMode(QLineEdit.EchoMode.Password)
         self.new_pw2 = QLineEdit()
         self.new_pw2.setEchoMode(QLineEdit.EchoMode.Password)
-        form.addRow("رمز عبور فعلی", self.cur_pw)
-        form.addRow("رمز عبور جدید", self.new_pw)
-        form.addRow("تکرار رمز جدید", self.new_pw2)
+        form.addRow(t("رمز عبور فعلی"), self.cur_pw)
+        form.addRow(t("رمز عبور جدید"), self.new_pw)
+        form.addRow(t("تکرار رمز جدید"), self.new_pw2)
         lay.addLayout(form)
 
-        btn = QPushButton("تغییر رمز عبور")
+        btn = QPushButton(t("تغییر رمز عبور"))
         btn.clicked.connect(self._change_password)
         lay.addWidget(btn)
         lay.addStretch(1)
@@ -183,21 +196,21 @@ class SettingsPage(QWidget):
         new = self.new_pw.text()
         new2 = self.new_pw2.text()
         if not cur or not new:
-            QMessageBox.warning(self, "خطا", "همه فیلدها را پر کنید.")
+            QMessageBox.warning(self, t("خطا"), t("همه فیلدها را پر کنید."))
             return
         if len(new) < 4:
-            QMessageBox.warning(self, "خطا", "رمز جدید باید حداقل ۴ حرف باشد.")
+            QMessageBox.warning(self, t("خطا"), t("رمز جدید باید حداقل ۴ حرف باشد."))
             return
         if new != new2:
-            QMessageBox.warning(self, "خطا", "رمز جدید و تکرار آن یکسان نیستند.")
+            QMessageBox.warning(self, t("خطا"), t("رمز جدید و تکرار آن یکسان نیستند."))
             return
         if user_model.change_password(session.current_user["id"], cur, new):
-            QMessageBox.information(self, "موفق", "رمز عبور با موفقیت تغییر کرد.")
+            QMessageBox.information(self, t("موفق"), t("رمز عبور با موفقیت تغییر کرد."))
             self.cur_pw.clear()
             self.new_pw.clear()
             self.new_pw2.clear()
         else:
-            QMessageBox.critical(self, "خطا", "رمز عبور فعلی اشتباه است.")
+            QMessageBox.critical(self, t("خطا"), t("رمز عبور فعلی اشتباه است."))
 
     # -- Logo -------------------------------------------------------------
     def _pick_logo(self):
@@ -215,7 +228,7 @@ class SettingsPage(QWidget):
     def _clear_logo(self):
         self._logo_path = ""
         self.logo_preview.setPixmap(QPixmap())
-        self.logo_preview.setText("بدون لوگو")
+        self.logo_preview.setText(t("بدون لوگو"))
 
     def _show_logo(self, path):
         if path and os.path.isfile(path):
@@ -225,29 +238,35 @@ class SettingsPage(QWidget):
             self.logo_preview.setPixmap(pix)
             self.logo_preview.setText("")
         else:
-            self.logo_preview.setText("بدون لوگو")
+            self.logo_preview.setText(t("بدون لوگو"))
 
     # -- Clinic save ------------------------------------------------------
     def _save_clinic(self):
         if not self.name.text().strip():
-            QMessageBox.warning(self, "خطا", "نام کلینیک الزامی است.")
+            QMessageBox.warning(self, t("خطا"), t("نام کلینیک الزامی است."))
             return
         clinic_model.update(
             self.name.text().strip(), self.owner.text().strip(),
             self.phone.text().strip(), self.address.text().strip(),
             self.email.text().strip(), self._logo_path,
         )
-        QMessageBox.information(self, "ذخیره شد", "تنظیمات کلینیک ذخیره شد.")
+        new_lang = self.language.currentData()
+        lang_changed = new_lang != i18n.get_language()
+        if lang_changed:
+            clinic_model.set_language(new_lang)
+        QMessageBox.information(self, t("ذخیره شد"), t("تنظیمات کلینیک ذخیره شد."))
         self.clinic_updated.emit()
+        if lang_changed:
+            self.language_changed.emit()
 
     # -- Backups ----------------------------------------------------------
     def _manual_backup(self):
         try:
             path = backup_service.create_backup("manual")
-            QMessageBox.information(self, "موفق", "پشتیبان ساخته شد:\n" + path)
+            QMessageBox.information(self, t("موفق"), t("پشتیبان ساخته شد:\n") + path)
             self._load_backups()
         except Exception as exc:  # noqa: BLE001
-            QMessageBox.critical(self, "خطا", "پشتیبان‌گیری ناموفق بود:\n" + str(exc))
+            QMessageBox.critical(self, t("خطا"), t("پشتیبان‌گیری ناموفق بود:\n") + str(exc))
 
     def _export_backup(self):
         dest, _ = QFileDialog.getSaveFileName(
@@ -259,7 +278,7 @@ class SettingsPage(QWidget):
             return
         try:
             backup_service.create_backup("manual", dest_path=dest)
-            QMessageBox.information(self, "موفق", "پشتیبان ذخیره شد:\n" + dest)
+            QMessageBox.information(self, t("موفق"), t("پشتیبان ذخیره شد:\n") + dest)
             self._load_backups()
         except Exception as exc:  # noqa: BLE001
             QMessageBox.critical(self, "خطا", str(exc))
@@ -271,20 +290,20 @@ class SettingsPage(QWidget):
         if not path:
             return
         confirm = QMessageBox.warning(
-            self, "بازیابی اطلاعات",
-            "تمام اطلاعات فعلی با اطلاعات فایل پشتیبان جایگزین می‌شود.\n"
-            "یک نسخه ایمنی از وضعیت فعلی به‌صورت خودکار ساخته خواهد شد.\n\n"
-            "ادامه می‌دهید؟",
+            self, t("بازیابی اطلاعات"),
+            t("تمام اطلاعات فعلی با اطلاعات فایل پشتیبان جایگزین می‌شود.\n"
+              "یک نسخه ایمنی از وضعیت فعلی به‌صورت خودکار ساخته خواهد شد.\n\n"
+              "ادامه می‌دهید؟"),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         if confirm != QMessageBox.StandardButton.Yes:
             return
         try:
             backup_service.restore_backup(path)
-            QMessageBox.information(self, "موفق", "اطلاعات با موفقیت بازیابی شد.")
+            QMessageBox.information(self, t("موفق"), t("اطلاعات با موفقیت بازیابی شد."))
             self.data_restored.emit()
             self.refresh()
         except Exception as exc:  # noqa: BLE001
-            QMessageBox.critical(self, "خطا", "بازیابی ناموفق بود:\n" + str(exc))
+            QMessageBox.critical(self, t("خطا"), t("بازیابی ناموفق بود:\n") + str(exc))
 
     def _load_backups(self):
         self.backups_table.setRowCount(0)
@@ -293,7 +312,7 @@ class SettingsPage(QWidget):
             self.backups_table.insertRow(r)
             self.backups_table.setItem(r, 0, QTableWidgetItem(
                 helpers.jalali_date(b.get("created_at"))))
-            kind = {"auto": "خودکار", "manual": "دستی"}.get(
+            kind = {"auto": t("خودکار"), "manual": t("دستی")}.get(
                 b.get("kind"), b.get("kind", ""))
             self.backups_table.setItem(r, 1, QTableWidgetItem(kind))
             size_kb = (b.get("size_bytes") or 0) / 1024

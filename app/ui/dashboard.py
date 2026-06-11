@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
 
 from ..models import stats
 from ..utils import helpers
+from ..services.i18n import t
 from .widgets.charts import BarChart, HBarChart, LineChart
 from .widgets.stat_card import StatCard
 
@@ -30,13 +31,13 @@ class DashboardPage(QScrollArea):
         # Stat cards grid
         self.cards_grid = QGridLayout()
         self.cards_grid.setSpacing(14)
-        self.card_today = StatCard("مریض‌های امروز", "۰", "👥", "#0E9F8E")
-        self.card_appts = StatCard("نوبت‌های امروز", "۰", "🗓", "#7C3AED")
-        self.card_total = StatCard("مجموع مریض‌ها", "۰", "🗂", "#6366F1")
-        self.card_today_rev = StatCard("درآمد امروز", "۰", "💵", "#10A05B")
-        self.card_month_rev = StatCard("درآمد این ماه", "۰", "📈", "#0891B2")
-        self.card_outstanding = StatCard("مطالبات معوقه", "۰", "⚠", "#E23D5B")
-        self.card_new_today = StatCard("ثبت‌نام امروز", "۰", "🆕", "#E0962A")
+        self.card_today = StatCard(t("مریض‌های امروز"), "۰", "👥", "#0E9F8E")
+        self.card_appts = StatCard(t("نوبت‌های امروز"), "۰", "🗓", "#7C3AED")
+        self.card_total = StatCard(t("مجموع مریض‌ها"), "۰", "🗂", "#6366F1")
+        self.card_today_rev = StatCard(t("درآمد امروز"), "۰", "💵", "#10A05B")
+        self.card_month_rev = StatCard(t("درآمد این ماه"), "۰", "📈", "#0891B2")
+        self.card_outstanding = StatCard(t("مطالبات معوقه"), "۰", "⚠", "#E23D5B")
+        self.card_new_today = StatCard(t("ثبت‌نام امروز"), "۰", "🆕", "#E0962A")
 
         for i, card in enumerate([
             self.card_today, self.card_appts, self.card_new_today,
@@ -50,15 +51,14 @@ class DashboardPage(QScrollArea):
         row1 = QHBoxLayout()
         row1.setSpacing(14)
         self.revenue_chart = LineChart(color=QColor("#0E9F8E"))
-        row1.addWidget(self._chart_card("درآمد ماهانه", self.revenue_chart), 1)
+        row1.addWidget(self._chart_card(t("درآمد ماهانه"), self.revenue_chart), 1)
         self.growth_chart = BarChart(color=QColor("#0891B2"))
-        row1.addWidget(self._chart_card("رشد مریض‌ها", self.growth_chart), 1)
+        row1.addWidget(self._chart_card(t("رشد مریض‌ها"), self.growth_chart), 1)
         self.root.addLayout(row1)
 
         # Charts row 2
         self.treatments_chart = HBarChart(color=QColor("#6366F1"))
-        self.root.addWidget(self._chart_card(
-            "رایج‌ترین معالجات", self.treatments_chart))
+        self.root.addWidget(self._chart_card(t("رایج‌ترین معالجات"), self.treatments_chart))
 
         self.root.addStretch(1)
 

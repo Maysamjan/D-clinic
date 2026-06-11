@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
 from .. import config
 from ..models import user as user_model
 from ..services import session
+from ..services.i18n import t
 from .widgets.actions import actions_cell, make_button, prepare_table
 
 
@@ -19,7 +20,6 @@ class UserDialog(QDialog):
     def __init__(self, parent=None, user: dict | None = None):
         super().__init__(parent)
         self.user = user
-        self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.setWindowTitle("ویرایش کاربر" if user else "کاربر جدید")
         self.setMinimumWidth(380)
         layout = QVBoxLayout(self)
@@ -34,15 +34,15 @@ class UserDialog(QDialog):
         self.password = QLineEdit()
         self.password.setEchoMode(QLineEdit.EchoMode.Password)
         self.status = QComboBox()
-        self.status.addItem("فعال", 1)
-        self.status.addItem("غیرفعال", 0)
+        self.status.addItem(t("فعال"), 1)
+        self.status.addItem(t("غیرفعال"), 0)
 
-        form.addRow("نام کاربری *", self.username)
-        form.addRow("نام مکمل", self.full_name)
-        form.addRow("نقش", self.role)
+        form.addRow(t("نام کاربری *"), self.username)
+        form.addRow(t("نام مکمل"), self.full_name)
+        form.addRow(t("نقش"), self.role)
         pw_label = "رمز عبور (خالی = بدون تغییر)" if user else "رمز عبور *"
         form.addRow(pw_label, self.password)
-        form.addRow("وضعیت", self.status)
+        form.addRow(t("وضعیت"), self.status)
         layout.addLayout(form)
 
         if user:
@@ -66,7 +66,7 @@ class UserDialog(QDialog):
     def _save(self):
         username = self.username.text().strip()
         if not username:
-            QMessageBox.warning(self, "خطا", "نام کاربری الزامی است.")
+            QMessageBox.warning(self, t("خطا"), t("نام کاربری الزامی است."))
             return
         pw = self.password.text()
         if self.user:
@@ -76,10 +76,10 @@ class UserDialog(QDialog):
                 password=pw or None)
         else:
             if not pw:
-                QMessageBox.warning(self, "خطا", "رمز عبور الزامی است.")
+                QMessageBox.warning(self, t("خطا"), t("رمز عبور الزامی است."))
                 return
             if user_model.username_exists(username):
-                QMessageBox.warning(self, "خطا", "این نام کاربری قبلاً ثبت شده است.")
+                QMessageBox.warning(self, t("خطا"), t("این نام کاربری قبلاً ثبت شده است."))
                 return
             user_model.create(username, pw, self.full_name.text(),
                               self.role.currentData())
@@ -94,7 +94,7 @@ class UsersPage(QWidget):
         layout.setSpacing(14)
 
         bar = QHBoxLayout()
-        add_btn = QPushButton("➕ کاربر جدید")
+        add_btn = QPushButton(t("➕ کاربر جدید"))
         add_btn.clicked.connect(self._add_user)
         bar.addWidget(add_btn)
         bar.addStretch(1)
@@ -102,7 +102,7 @@ class UsersPage(QWidget):
 
         self.table = QTableWidget(0, 5)
         self.table.setHorizontalHeaderLabels([
-            "نام کاربری", "نام مکمل", "نقش", "وضعیت", "عملیات"])
+            t("نام کاربری"), t("نام مکمل"), t("نقش"), t("وضعیت"), t("عملیات")])
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setAlternatingRowColors(True)
         prepare_table(self.table)
@@ -124,13 +124,13 @@ class UsersPage(QWidget):
 
     def _delete_user(self, u):
         if session.current_user and u["id"] == session.current_user["id"]:
-            QMessageBox.warning(self, "خطا", "نمی‌توانید کاربر فعال فعلی را حذف کنید.")
+            QMessageBox.warning(self, t("خطا"), t("نمی‌توانید کاربر فعال فعلی را حذف کنید."))
             return
         if user_model.count() <= 1:
-            QMessageBox.warning(self, "خطا", "حداقل یک کاربر باید باقی بماند.")
+            QMessageBox.warning(self, t("خطا"), t("حداقل یک کاربر باید باقی بماند."))
             return
         if QMessageBox.question(
-            self, "حذف کاربر", f"کاربر «{u.get('username')}» حذف شود؟"
+            self, t("حذف کاربر"), t(f"کاربر «{u.get('username')}» حذف شود؟")
         ) == QMessageBox.StandardButton.Yes:
             user_model.delete(u["id"])
             self.refresh()
@@ -145,7 +145,7 @@ class UsersPage(QWidget):
             self.table.setItem(r, 2, QTableWidgetItem(
                 config.ROLE_LABELS.get(u.get("role"), u.get("role", ""))))
             self.table.setItem(r, 3, QTableWidgetItem(
-                "فعال" if u.get("is_active") else "غیرفعال"))
+                t("فعال") if u.get("is_active") else t("غیرفعال")))
             self.table.setCellWidget(r, 4, actions_cell([
                 make_button("ویرایش", "default", "ویرایش کاربر",
                             lambda uu=u: self._edit_user(uu)),

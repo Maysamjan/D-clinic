@@ -15,6 +15,7 @@ consistent professional teal theme and the bundled high-quality
 
 | Module | Description |
 |---|---|
+| 🌐 **Bilingual (FA/EN)** | Switch the whole interface — and printed documents — between Persian/Dari and English from Settings (RTL ↔ LTR, Jalali ↔ Gregorian) |
 | 🔐 **Login & Users** | Three roles — Admin, Doctor, Receptionist — with role-based permissions |
 | 🗓 **Appointments** | Day-by-day scheduling, status (waiting / done / cancelled / no-show), open patient file directly |
 | 🦷 **Dental Chart (Odontogram)** | Colour-coded 32-tooth chart; set per-tooth condition (caries, filled, root canal, crown, implant, extracted) |

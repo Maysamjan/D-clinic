@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
 from .. import config
 from ..models import user as user_model
 from ..services import session
+from ..services.i18n import t
 
 
 class LoginWindow(QWidget):
@@ -22,7 +23,6 @@ class LoginWindow(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle(config.APP_NAME + " — ورود")
-        self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.resize(960, 620)
         self._build()
 
@@ -49,7 +49,7 @@ class LoginWindow(QWidget):
         sub = QLabel(config.APP_TITLE)
         sub.setStyleSheet("color:#CFEFEA; font-size:16px;")
         sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        tag = QLabel("نرم‌افزار مدیریت کلینیک دندانپزشکی — افغانستان")
+        tag = QLabel(t("نرم‌افزار مدیریت کلینیک دندانپزشکی — افغانستان"))
         tag.setStyleSheet("color:#9FD8D1; font-size:13px; margin-top:20px;")
         tag.setAlignment(Qt.AlignmentFlag.AlignCenter)
         bl.addWidget(logo)
@@ -76,23 +76,23 @@ class LoginWindow(QWidget):
         cl.setContentsMargins(30, 30, 30, 30)
         cl.setSpacing(14)
 
-        title = QLabel("ورود به سیستم")
+        title = QLabel(t("ورود به سیستم"))
         title.setObjectName("LoginTitle")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        hint = QLabel("لطفاً نام کاربری و رمز عبور خود را وارد کنید")
+        hint = QLabel(t("لطفاً نام کاربری و رمز عبور خود را وارد کنید"))
         hint.setObjectName("LoginSub")
         hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
         hint.setWordWrap(True)
 
         self.username = QLineEdit()
-        self.username.setPlaceholderText("نام کاربری")
+        self.username.setPlaceholderText(t("نام کاربری"))
         self.username.setMinimumHeight(42)
         self.password = QLineEdit()
-        self.password.setPlaceholderText("رمز عبور")
+        self.password.setPlaceholderText(t("رمز عبور"))
         self.password.setEchoMode(QLineEdit.EchoMode.Password)
         self.password.setMinimumHeight(42)
 
-        login_btn = QPushButton("ورود")
+        login_btn = QPushButton(t("ورود"))
         login_btn.setMinimumHeight(46)
         login_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         login_btn.setStyleSheet(
@@ -108,14 +108,14 @@ class LoginWindow(QWidget):
         cl.addWidget(title)
         cl.addWidget(hint)
         cl.addSpacing(6)
-        cl.addWidget(QLabel("نام کاربری"))
+        cl.addWidget(QLabel(t("نام کاربری")))
         cl.addWidget(self.username)
-        cl.addWidget(QLabel("رمز عبور"))
+        cl.addWidget(QLabel(t("رمز عبور")))
         cl.addWidget(self.password)
         cl.addSpacing(8)
         cl.addWidget(login_btn)
 
-        hint2 = QLabel("ورود پیش‌فرض مدیر:  admin / admin")
+        hint2 = QLabel(t("ورود پیش‌فرض مدیر:  admin / admin"))
         hint2.setObjectName("LoginHint")
         hint2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         cl.addSpacing(4)
@@ -132,12 +132,12 @@ class LoginWindow(QWidget):
         username = self.username.text().strip()
         password = self.password.text()
         if not username or not password:
-            QMessageBox.warning(self, "خطا", "نام کاربری و رمز عبور را وارد کنید.")
+            QMessageBox.warning(self, t("خطا"), t("نام کاربری و رمز عبور را وارد کنید."))
             return
         user = user_model.authenticate(username, password)
         if user is None:
-            QMessageBox.critical(self, "خطای ورود",
-                                 "نام کاربری یا رمز عبور اشتباه است.")
+            QMessageBox.critical(self, t("خطای ورود"),
+                                 t("نام کاربری یا رمز عبور اشتباه است."))
             self.password.clear()
             self.password.setFocus()
             return

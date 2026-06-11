@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
 
 from ...models import attachment as attachment_model
 from ...utils import helpers
+from ...services.i18n import t
 
 
 class _TimelineItem(QFrame):
@@ -110,7 +111,7 @@ class TimelineWidget(QScrollArea):
                 w.deleteLater()
 
         if not visits:
-            empty = QLabel("هنوز هیچ ویزیتی برای این مریض ثبت نشده است.")
+            empty = QLabel(t("هنوز هیچ ویزیتی برای این مریض ثبت نشده است."))
             empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
             empty.setStyleSheet("color: #94a3b8; padding: 30px;")
             self._layout.addWidget(empty)

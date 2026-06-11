@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
 
 from .. import config
 from ..services import license_service as lic
+from ..services.i18n import t
 
 
 class ActivationWindow(QWidget):
@@ -23,7 +24,6 @@ class ActivationWindow(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle(config.APP_NAME + " — فعال‌سازی")
-        self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.resize(720, 600)
         self._build()
 
@@ -47,12 +47,11 @@ class ActivationWindow(QWidget):
         logo = QLabel("🦷  " + config.APP_NAME)
         logo.setObjectName("LoginTitle")
         logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title = QLabel("فعال‌سازی نرم‌افزار")
+        title = QLabel(t("فعال‌سازی نرم‌افزار"))
         title.setStyleSheet("font-size:18px; font-weight:700; color:#0E9F8E;")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        hint = QLabel(
-            "این نسخه برای همین کمپیوتر قفل می‌شود. لطفاً «شناسه دستگاه» زیر را "
-            "برای فروشنده بفرستید و «کلید محصول» دریافتی را وارد کنید.")
+        hint = QLabel(t("این نسخه برای همین کمپیوتر قفل می‌شود. لطفاً «شناسه دستگاه» زیر را "
+            "برای فروشنده بفرستید و «کلید محصول» دریافتی را وارد کنید."))
         hint.setObjectName("LoginSub")
         hint.setWordWrap(True)
         hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -66,14 +65,14 @@ class ActivationWindow(QWidget):
             "background:#E3F6F3; border:1px solid #A6DCD5; border-radius:10px;")
         ml = QVBoxLayout(mid_box)
         ml.setContentsMargins(14, 10, 14, 10)
-        cap = QLabel("شناسه دستگاه شما:")
+        cap = QLabel(t("شناسه دستگاه شما:"))
         cap.setStyleSheet("color:#0A6B61; font-size:12px; font-weight:600;")
         self.mid_label = QLabel(lic.machine_id_display())
         self.mid_label.setStyleSheet(
             "color:#0A6B61; font-size:18px; font-weight:700;")
         self.mid_label.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextSelectableByMouse)
-        copy_btn = QPushButton("کپی شناسه دستگاه")
+        copy_btn = QPushButton(t("کپی شناسه دستگاه"))
         copy_btn.setObjectName("Secondary")
         copy_btn.clicked.connect(self._copy_mid)
         ml.addWidget(cap)
@@ -81,17 +80,17 @@ class ActivationWindow(QWidget):
         ml.addWidget(copy_btn)
         lay.addWidget(mid_box)
 
-        lay.addWidget(QLabel("کلید محصول:"))
+        lay.addWidget(QLabel(t("کلید محصول:")))
         self.key_input = QPlainTextEdit()
-        self.key_input.setPlaceholderText("کلید محصول را اینجا وارد یا الصاق کنید ...")
+        self.key_input.setPlaceholderText(t("کلید محصول را اینجا وارد یا الصاق کنید ..."))
         self.key_input.setFixedHeight(80)
         lay.addWidget(self.key_input)
 
         row = QHBoxLayout()
-        load_btn = QPushButton("بارگذاری فایل کلید (.lic)")
+        load_btn = QPushButton(t("بارگذاری فایل کلید (.lic)"))
         load_btn.setObjectName("Secondary")
         load_btn.clicked.connect(self._load_file)
-        activate_btn = QPushButton("فعال‌سازی")
+        activate_btn = QPushButton(t("فعال‌سازی"))
         activate_btn.setMinimumHeight(44)
         activate_btn.clicked.connect(self._activate)
         row.addWidget(load_btn)
@@ -102,7 +101,7 @@ class ActivationWindow(QWidget):
 
     def _copy_mid(self):
         QGuiApplication.clipboard().setText(lic.machine_id_display())
-        QMessageBox.information(self, "کپی شد", "شناسه دستگاه کپی شد.")
+        QMessageBox.information(self, t("کپی شد"), t("شناسه دستگاه کپی شد."))
 
     def _load_file(self):
         path, _ = QFileDialog.getOpenFileName(
@@ -117,14 +116,14 @@ class ActivationWindow(QWidget):
     def _activate(self):
         key = self.key_input.toPlainText().strip()
         if not key:
-            QMessageBox.warning(self, "خطا", "لطفاً کلید محصول را وارد کنید.")
+            QMessageBox.warning(self, t("خطا"), t("لطفاً کلید محصول را وارد کنید."))
             return
         if lic.activate(key):
             QMessageBox.information(
-                self, "فعال شد", "نرم‌افزار با موفقیت فعال شد.")
+                self, t("فعال شد"), t("نرم‌افزار با موفقیت فعال شد."))
             self.activated.emit()
         else:
             QMessageBox.critical(
-                self, "کلید نامعتبر",
-                "کلید محصول برای این کمپیوتر معتبر نیست.\n"
-                "لطفاً شناسه دستگاه را دوباره برای فروشنده بفرستید.")
+                self, t("کلید نامعتبر"),
+                t("کلید محصول برای این کمپیوتر معتبر نیست.\n"
+                  "لطفاً شناسه دستگاه را دوباره برای فروشنده بفرستید."))

@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
 from .. import config
 from ..models import clinic as clinic_model
 from ..services import session
+from ..services.i18n import is_rtl, t
 from .appointments_page import AppointmentsPage
 from .dashboard import DashboardPage
 from .expenses_page import ExpensesPage
@@ -26,11 +27,14 @@ from .users_page import UsersPage
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, on_logout=None):
+    def __init__(self, on_logout=None, on_relaunch=None):
         super().__init__()
         self._on_logout = on_logout
+        self._on_relaunch = on_relaunch
         self.setWindowTitle(config.APP_NAME + " — " + config.APP_TITLE)
-        self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
+        self.setLayoutDirection(
+            Qt.LayoutDirection.RightToLeft if is_rtl()
+            else Qt.LayoutDirection.LeftToRight)
         self.resize(1280, 800)
         self._nav_buttons: dict[str, QPushButton] = {}
         self._build()
@@ -68,7 +72,7 @@ class MainWindow(QMainWindow):
 
         brand = QLabel("🦷  " + config.APP_NAME)
         brand.setObjectName("BrandTitle")
-        sub = QLabel("مدیریت کلینیک دندانپزشکی")
+        sub = QLabel(t("مدیریت کلینیک دندانپزشکی"))
         sub.setObjectName("BrandSub")
         lay.addWidget(brand)
         lay.addWidget(sub)
@@ -83,22 +87,22 @@ class MainWindow(QMainWindow):
         self._nav_group.setExclusive(True)
 
         nav_items = [
-            ("dashboard", "🏠  داشبورد", "dashboard"),
-            ("appointments", "🗓  نوبت‌دهی", "appointments"),
-            ("patients", "👥  مریض‌ها", "patients"),
-            ("staff", "🩺  داکتران و کارمندان", "staff"),
-            ("salaries", "💵  معاشات", "salaries"),
-            ("inventory", "📦  گدام و انبار", "inventory"),
-            ("expenses", "🧾  مصارف و حسابداری", "expenses"),
-            ("reports", "📊  گزارش‌ها", "reports"),
-            ("services", "💲  خدمات و قیمت‌ها", "services"),
-            ("users", "🔑  کاربران", "users"),
-            ("settings", "⚙  تنظیمات", "settings"),
+            ("dashboard", "🏠", "داشبورد", "dashboard"),
+            ("appointments", "🗓", "نوبت‌دهی", "appointments"),
+            ("patients", "👥", "مریض‌ها", "patients"),
+            ("staff", "🩺", "داکتران و کارمندان", "staff"),
+            ("salaries", "💵", "معاشات", "salaries"),
+            ("inventory", "📦", "گدام و انبار", "inventory"),
+            ("expenses", "🧾", "مصارف و حسابداری", "expenses"),
+            ("reports", "📊", "گزارش‌ها", "reports"),
+            ("services", "💲", "خدمات و قیمت‌ها", "services"),
+            ("users", "🔑", "کاربران", "users"),
+            ("settings", "⚙", "تنظیمات", "settings"),
         ]
-        for key, label, cap in nav_items:
+        for key, icon, label, cap in nav_items:
             if not session.can(cap):
                 continue
-            btn = QPushButton(label)
+            btn = QPushButton(f"{icon}  {t(label)}")
             btn.setObjectName("NavButton")
             btn.setCheckable(True)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -114,7 +118,7 @@ class MainWindow(QMainWindow):
         sep2.setFrameShape(QFrame.Shape.HLine)
         lay.addWidget(sep2)
         lay.addSpacing(6)
-        logout_btn = QPushButton("🚪  خروج از حساب")
+        logout_btn = QPushButton("🚪  " + t("خروج از حساب"))
         logout_btn.setObjectName("NavLogout")
         logout_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         logout_btn.clicked.connect(self._logout)
@@ -129,7 +133,7 @@ class MainWindow(QMainWindow):
         lay.setContentsMargins(26, 0, 26, 0)
         lay.setSpacing(12)
 
-        self.page_title = QLabel("داشبورد")
+        self.page_title = QLabel(t("داشبورد"))
         self.page_title.setObjectName("PageTitle")
         lay.addWidget(self.page_title)
         lay.addStretch(1)
@@ -140,9 +144,8 @@ class MainWindow(QMainWindow):
         lay.addSpacing(16)
 
         user = session.current_user or {}
-        role_label = config.ROLE_LABELS.get(user.get("role"), "")
-        self.user_chip = QLabel(
-            f"👤 {user.get('full_name') or user.get('username','')} — {role_label}")
+        role_label = t(config.ROLE_LABELS.get(user.get("role"), ""))
+        self.user_chip = QLabel(f"👤 {user.get('full_name') or user.get('username','')} — {role_label}")
         self.user_chip.setObjectName("UserChip")
         lay.addWidget(self.user_chip)
 
@@ -193,6 +196,8 @@ class MainWindow(QMainWindow):
             self.settings = SettingsPage()
             self.settings.clinic_updated.connect(self._refresh_clinic_name)
             self.settings.data_restored.connect(self._on_data_restored)
+            if self._on_relaunch:
+                self.settings.language_changed.connect(self._on_relaunch)
             self._add_page("settings", self.settings)
 
     def _add_page(self, key: str, widget: QWidget):
@@ -221,7 +226,7 @@ class MainWindow(QMainWindow):
         if hasattr(page, "refresh"):
             page.refresh()
         self.stack.setCurrentWidget(page)
-        self.page_title.setText(self._TITLES.get(key, ""))
+        self.page_title.setText(t(self._TITLES.get(key, "")))
         if key in self._nav_buttons:
             self._nav_buttons[key].setChecked(True)
 
@@ -237,14 +242,14 @@ class MainWindow(QMainWindow):
 
     def _on_data_restored(self):
         QMessageBox.information(
-            self, "بازیابی",
-            "اطلاعات بازیابی شد. برنامه به داشبورد بازمی‌گردد.")
+            self, t("بازیابی"),
+            t("اطلاعات بازیابی شد. برنامه به داشبورد بازمی‌گردد."))
         self._refresh_clinic_name()
         self._go("dashboard")
 
     def _logout(self):
         if QMessageBox.question(
-            self, "خروج", "از حساب کاربری خارج می‌شوید؟"
+            self, t("خروج"), t("از حساب کاربری خارج می‌شوید؟")
         ) == QMessageBox.StandardButton.Yes:
             session.logout()
             if self._on_logout:

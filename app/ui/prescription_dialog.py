@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
 from ..models import prescription as presc_model
 from ..models import staff as staff_model
 from ..services import session
+from ..services.i18n import t
 from .widgets.dialog_header import setup_form_dialog
 
 COMMON_DRUGS = [
@@ -26,7 +27,7 @@ class PrescriptionDialog(QDialog):
         super().__init__(parent)
         self.patient_id = patient_id
         self.prescription_id = None
-        self.setWindowTitle("نسخه‌ی جدید")
+        self.setWindowTitle(t("نسخه‌ی جدید"))
         self.setMinimumWidth(560)
         layout = setup_form_dialog(self, "نسخه‌ی جدید",
                                    "تجویز دوا برای مریض", "℞")
@@ -48,12 +49,12 @@ class PrescriptionDialog(QDialog):
         self.drug.addItem("")
         self.drug.addItems(COMMON_DRUGS)
         self.dosage = QLineEdit()
-        self.dosage.setPlaceholderText("مقدار مصرف، مثلاً ۱ قرص")
+        self.dosage.setPlaceholderText(t("مقدار مصرف، مثلاً ۱ قرص"))
         self.quantity = QLineEdit()
-        self.quantity.setPlaceholderText("تعداد تحویلی، مثلاً ۲۰ عدد یا ۲ تخته")
+        self.quantity.setPlaceholderText(t("تعداد تحویلی، مثلاً ۲۰ عدد یا ۲ تخته"))
         self.instr = QLineEdit()
-        self.instr.setPlaceholderText("دستور، مثلاً هر ۸ ساعت بعد از غذا")
-        add_btn = QPushButton("افزودن")
+        self.instr.setPlaceholderText(t("دستور، مثلاً هر ۸ ساعت بعد از غذا"))
+        add_btn = QPushButton(t("افزودن"))
         add_btn.setObjectName("Success")
         add_btn.clicked.connect(self._add_item)
         add_row.addWidget(self.drug, 2)
@@ -64,8 +65,7 @@ class PrescriptionDialog(QDialog):
         layout.addLayout(add_row)
 
         self.table = QTableWidget(0, 5)
-        self.table.setHorizontalHeaderLabels(
-            ["دوا", "مقدار مصرف", "تعداد تحویلی", "دستور مصرف", ""])
+        self.table.setHorizontalHeaderLabels([t("دوا"), t("مقدار مصرف"), t("تعداد تحویلی"), t("دستور مصرف"), ""])
         self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.horizontalHeader().setSectionResizeMode(
@@ -74,7 +74,7 @@ class PrescriptionDialog(QDialog):
         layout.addWidget(self.table)
 
         self.notes = QLineEdit()
-        self.notes.setPlaceholderText("یادداشت (اختیاری)")
+        self.notes.setPlaceholderText(t("یادداشت (اختیاری)"))
         layout.addWidget(self.notes)
 
         buttons = QDialogButtonBox(
@@ -89,7 +89,7 @@ class PrescriptionDialog(QDialog):
     def _add_item(self):
         drug = self.drug.currentText().strip()
         if not drug:
-            QMessageBox.warning(self, "خطا", "نام دوا را وارد کنید.")
+            QMessageBox.warning(self, t("خطا"), t("نام دوا را وارد کنید."))
             return
         r = self.table.rowCount()
         self.table.insertRow(r)
@@ -121,7 +121,7 @@ class PrescriptionDialog(QDialog):
     def _save(self):
         items = self._items()
         if not items:
-            QMessageBox.warning(self, "خطا", "حداقل یک دوا اضافه کنید.")
+            QMessageBox.warning(self, t("خطا"), t("حداقل یک دوا اضافه کنید."))
             return
         uid = session.current_user["id"] if session.current_user else None
         self.prescription_id = presc_model.create(

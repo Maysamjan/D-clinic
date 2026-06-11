@@ -13,6 +13,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHBoxLayout, QLineEdit, QPushButton, QWidget
 
 from ...services import jalali
+from ...services.i18n import t
 
 _FA_TO_EN = str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789")
 
@@ -24,9 +25,9 @@ class JalaliDateEdit(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(6)
         self.edit = QLineEdit()
-        self.edit.setPlaceholderText("۱۴۰۵/۰۱/۰۱")
+        self.edit.setPlaceholderText(t("۱۴۰۵/۰۱/۰۱"))
         self.edit.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        today_btn = QPushButton("امروز")
+        today_btn = QPushButton(t("امروز"))
         today_btn.setObjectName("Secondary")
         today_btn.setFixedWidth(64)
         today_btn.clicked.connect(self.set_today)

@@ -23,6 +23,7 @@ from ..models import (
 )
 from ..services import session
 from ..utils import helpers, printing
+from ..services.i18n import t
 from .dialogs import PatientDialog, PaymentDialog, VisitDialog
 from .invoice_dialog import InvoiceDialog
 from .prescription_dialog import PrescriptionDialog
@@ -57,7 +58,7 @@ class PatientFilePage(QWidget):
 
         # Top bar: back + name + actions
         top = QHBoxLayout()
-        back_btn = QPushButton("→ بازگشت")
+        back_btn = QPushButton(t("→ بازگشت"))
         back_btn.setObjectName("Secondary")
         back_btn.clicked.connect(self.back.emit)
         top.addWidget(back_btn)
@@ -72,10 +73,10 @@ class PatientFilePage(QWidget):
         top.addWidget(self.code_label)
         top.addStretch(1)
 
-        self.edit_btn = QPushButton("✎ ویرایش")
+        self.edit_btn = QPushButton(t("✎ ویرایش"))
         self.edit_btn.setObjectName("Secondary")
         self.edit_btn.clicked.connect(self._edit_patient)
-        self.print_file_btn = QPushButton("🖨 چاپ پرونده")
+        self.print_file_btn = QPushButton(t("🖨 چاپ پرونده"))
         self.print_file_btn.clicked.connect(self._print_file)
         top.addWidget(self.edit_btn)
         top.addWidget(self.print_file_btn)
@@ -131,7 +132,7 @@ class PatientFilePage(QWidget):
         ilay = QVBoxLayout(info_card)
         ilay.setContentsMargins(16, 16, 16, 16)
         ilay.setSpacing(8)
-        title = QLabel("معلومات شخصی")
+        title = QLabel(t("معلومات شخصی"))
         title.setObjectName("CardTitle")
         ilay.addWidget(title)
         self.info_labels: dict[str, QLabel] = {}
@@ -161,11 +162,11 @@ class PatientFilePage(QWidget):
         tllay = QVBoxLayout(tl_card)
         tllay.setContentsMargins(16, 16, 16, 16)
         th = QHBoxLayout()
-        tl_title = QLabel("📋 جدول زمانی مراجعات")
+        tl_title = QLabel(t("📋 جدول زمانی مراجعات"))
         tl_title.setObjectName("CardTitle")
         th.addWidget(tl_title)
         th.addStretch(1)
-        self.add_visit_btn2 = QPushButton("➕ ویزیت جدید")
+        self.add_visit_btn2 = QPushButton(t("➕ ویزیت جدید"))
         self.add_visit_btn2.setObjectName("Success")
         self.add_visit_btn2.clicked.connect(self._add_visit)
         th.addWidget(self.add_visit_btn2)
@@ -174,13 +175,13 @@ class PatientFilePage(QWidget):
         tllay.addWidget(self.timeline, 1)
         lay.addWidget(tl_card, 1)
 
-        self.tabs.addTab(tab, "نمای کلی و جدول زمانی")
+        self.tabs.addTab(tab, t("نمای کلی و جدول زمانی"))
 
     def _build_visits_tab(self):
         tab = QWidget()
         lay = QVBoxLayout(tab)
         bar = QHBoxLayout()
-        self.add_visit_btn = QPushButton("➕ ثبت ویزیت")
+        self.add_visit_btn = QPushButton(t("➕ ثبت ویزیت"))
         self.add_visit_btn.setObjectName("Success")
         self.add_visit_btn.clicked.connect(self._add_visit)
         bar.addWidget(self.add_visit_btn)
@@ -189,7 +190,7 @@ class PatientFilePage(QWidget):
 
         self.visits_table = QTableWidget(0, 7)
         self.visits_table.setHorizontalHeaderLabels([
-            "تاریخ", "معالجه", "دندان", "داکتر", "هزینه", "یادداشت", "عملیات"])
+            t("تاریخ"), t("معالجه"), t("دندان"), t("داکتر"), t("هزینه"), t("یادداشت"), t("عملیات")])
         prepare_table(self.visits_table)
         self.visits_table.setEditTriggers(
             QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -200,13 +201,13 @@ class PatientFilePage(QWidget):
         h.setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch)
         h.setSectionResizeMode(6, QHeaderView.ResizeMode.ResizeToContents)
         lay.addWidget(self.visits_table)
-        self.tabs.addTab(tab, "ویزیت‌ها / معالجات")
+        self.tabs.addTab(tab, t("ویزیت‌ها / معالجات"))
 
     def _build_payments_tab(self):
         tab = QWidget()
         lay = QVBoxLayout(tab)
         bar = QHBoxLayout()
-        self.add_payment_btn = QPushButton("➕ ثبت پرداخت")
+        self.add_payment_btn = QPushButton(t("➕ ثبت پرداخت"))
         self.add_payment_btn.setObjectName("Success")
         self.add_payment_btn.clicked.connect(self._add_payment)
         bar.addWidget(self.add_payment_btn)
@@ -215,7 +216,7 @@ class PatientFilePage(QWidget):
 
         self.payments_table = QTableWidget(0, 5)
         self.payments_table.setHorizontalHeaderLabels([
-            "تاریخ", "مبلغ", "روش", "یادداشت", "عملیات"])
+            t("تاریخ"), t("مبلغ"), t("روش"), t("یادداشت"), t("عملیات")])
         prepare_table(self.payments_table)
         self.payments_table.setEditTriggers(
             QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -223,13 +224,13 @@ class PatientFilePage(QWidget):
         h = self.payments_table.horizontalHeader()
         h.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
         lay.addWidget(self.payments_table)
-        self.tabs.addTab(tab, "پرداخت‌ها")
+        self.tabs.addTab(tab, t("پرداخت‌ها"))
 
     def _build_invoices_tab(self):
         tab = QWidget()
         lay = QVBoxLayout(tab)
         bar = QHBoxLayout()
-        self.add_invoice_btn = QPushButton("➕ صدور صورتحساب")
+        self.add_invoice_btn = QPushButton(t("➕ صدور صورتحساب"))
         self.add_invoice_btn.setObjectName("Success")
         self.add_invoice_btn.clicked.connect(self._add_invoice)
         bar.addWidget(self.add_invoice_btn)
@@ -238,7 +239,7 @@ class PatientFilePage(QWidget):
 
         self.invoices_table = QTableWidget(0, 6)
         self.invoices_table.setHorizontalHeaderLabels([
-            "شماره", "تاریخ", "مجموع", "پرداخت", "باقیمانده", "عملیات"])
+            t("شماره"), t("تاریخ"), t("مجموع"), t("پرداخت"), t("باقیمانده"), t("عملیات")])
         prepare_table(self.invoices_table)
         self.invoices_table.setEditTriggers(
             QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -246,16 +247,16 @@ class PatientFilePage(QWidget):
         h = self.invoices_table.horizontalHeader()
         h.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         lay.addWidget(self.invoices_table)
-        self.tabs.addTab(tab, "صورتحساب‌ها")
+        self.tabs.addTab(tab, t("صورتحساب‌ها"))
 
     def _build_files_tab(self):
         tab = QWidget()
         lay = QVBoxLayout(tab)
-        info = QLabel("برای افزودن فایل جدید، از داخل هر ویزیت استفاده کنید.")
+        info = QLabel(t("برای افزودن فایل جدید، از داخل هر ویزیت استفاده کنید."))
         info.setStyleSheet("color:#64748b;")
         lay.addWidget(info)
         self.files_table = QTableWidget(0, 4)
-        self.files_table.setHorizontalHeaderLabels(["نام فایل", "نوع", "تاریخ", "عملیات"])
+        self.files_table.setHorizontalHeaderLabels([t("نام فایل"), t("نوع"), t("تاریخ"), t("عملیات")])
         prepare_table(self.files_table)
         self.files_table.setEditTriggers(
             QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -263,7 +264,7 @@ class PatientFilePage(QWidget):
         h = self.files_table.horizontalHeader()
         h.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         lay.addWidget(self.files_table)
-        self.tabs.addTab(tab, "فایل‌ها و تصاویر")
+        self.tabs.addTab(tab, t("فایل‌ها و تصاویر"))
 
     def _build_chart_tab(self):
         tab = QWidget()
@@ -271,13 +272,13 @@ class PatientFilePage(QWidget):
         lay.setContentsMargins(12, 12, 12, 12)
         self.odontogram = OdontogramWidget()
         lay.addWidget(self.odontogram)
-        self.tabs.addTab(tab, "🦷 چارت دندان")
+        self.tabs.addTab(tab, t("🦷 چارت دندان"))
 
     def _build_prescriptions_tab(self):
         tab = QWidget()
         lay = QVBoxLayout(tab)
         bar = QHBoxLayout()
-        self.add_presc_btn = QPushButton("℞ نسخه‌ی جدید")
+        self.add_presc_btn = QPushButton(t("℞ نسخه‌ی جدید"))
         self.add_presc_btn.setObjectName("Success")
         self.add_presc_btn.clicked.connect(self._add_prescription)
         bar.addWidget(self.add_presc_btn)
@@ -285,8 +286,7 @@ class PatientFilePage(QWidget):
         lay.addLayout(bar)
 
         self.presc_table = QTableWidget(0, 4)
-        self.presc_table.setHorizontalHeaderLabels(
-            ["تاریخ", "داکتر", "تعداد دوا", "عملیات"])
+        self.presc_table.setHorizontalHeaderLabels([t("تاریخ"), t("داکتر"), t("تعداد دوا"), t("عملیات")])
         prepare_table(self.presc_table)
         self.presc_table.setEditTriggers(
             QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -294,7 +294,7 @@ class PatientFilePage(QWidget):
         h = self.presc_table.horizontalHeader()
         h.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         lay.addWidget(self.presc_table)
-        self.tabs.addTab(tab, "℞ نسخه‌ها")
+        self.tabs.addTab(tab, t("℞ نسخه‌ها"))
 
     # -- Permissions ------------------------------------------------------
     def _apply_permissions(self):
@@ -400,7 +400,7 @@ class PatientFilePage(QWidget):
                 helpers.jalali_date(pay.get("pay_date"))))
             self.payments_table.setItem(r, 1, QTableWidgetItem(
                 helpers.format_money(pay.get("amount", 0))))
-            method = {"cash": "نقدی", "card": "کارت / انتقال"}.get(
+            method = {"cash": t("نقدی"), "card": t("کارت / انتقال")}.get(
                 pay.get("method"), pay.get("method", ""))
             self.payments_table.setItem(r, 2, QTableWidgetItem(method))
             self.payments_table.setItem(r, 3, QTableWidgetItem(pay.get("notes") or ""))
@@ -457,7 +457,7 @@ class PatientFilePage(QWidget):
 
     def _delete_prescription(self, pid):
         if QMessageBox.question(
-            self, "حذف", "این نسخه حذف شود؟"
+            self, t("حذف"), t("این نسخه حذف شود؟")
         ) == QMessageBox.StandardButton.Yes:
             prescription_model.delete(pid)
             self.refresh()
@@ -472,7 +472,7 @@ class PatientFilePage(QWidget):
             self.files_table.insertRow(r)
             self.files_table.setItem(r, 0, QTableWidgetItem(
                 a.get("original_name") or os.path.basename(a.get("file_path", ""))))
-            ftype = {"image": "تصویر", "pdf": "PDF", "document": "سند"}.get(
+            ftype = {"image": t("تصویر"), "pdf": "PDF", "document": t("سند")}.get(
                 a.get("file_type"), a.get("file_type", ""))
             self.files_table.setItem(r, 1, QTableWidgetItem(ftype))
             self.files_table.setItem(r, 2, QTableWidgetItem(
@@ -500,8 +500,8 @@ class PatientFilePage(QWidget):
 
     def _delete_visit(self, vid):
         if QMessageBox.question(
-            self, "حذف ویزیت",
-            "این ویزیت و ضمیمه‌های آن حذف شوند؟"
+            self, t("حذف ویزیت"),
+            t("این ویزیت و ضمیمه‌های آن حذف شوند؟")
         ) == QMessageBox.StandardButton.Yes:
             visit_model.delete(vid)
             self.refresh()
@@ -515,7 +515,7 @@ class PatientFilePage(QWidget):
 
     def _delete_payment(self, pid):
         if QMessageBox.question(
-            self, "حذف پرداخت", "این پرداخت حذف شود؟"
+            self, t("حذف پرداخت"), t("این پرداخت حذف شود؟")
         ) == QMessageBox.StandardButton.Yes:
             payment_model.delete(pid)
             self.refresh()
@@ -531,7 +531,7 @@ class PatientFilePage(QWidget):
         if path and os.path.isfile(path):
             QDesktopServices.openUrl(QUrl.fromLocalFile(path))
         else:
-            QMessageBox.warning(self, "خطا", "فایل یافت نشد.")
+            QMessageBox.warning(self, t("خطا"), t("فایل یافت نشد."))
 
     # -- Printing ---------------------------------------------------------
     def _print_file(self):

@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
 from ..models import staff as staff_model
 from ..services import session
 from ..utils import helpers, printing
+from ..services.i18n import t
 from .widgets.actions import actions_cell, make_button, prepare_table
 from .widgets.dialog_header import dialog_header, setup_form_dialog
 from .widgets.jalali_date_edit import JalaliDateEdit
@@ -33,7 +34,6 @@ class StaffDialog(QDialog):
     def __init__(self, parent=None, member: dict | None = None):
         super().__init__(parent)
         self.member = member
-        self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.setWindowTitle("ویرایش کارمند" if member else "ثبت کارمند / داکتر جدید")
         self.setMinimumWidth(460)
         outer = QVBoxLayout(self)
@@ -53,7 +53,7 @@ class StaffDialog(QDialog):
         form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
 
         self.code = QLineEdit()
-        self.code.setPlaceholderText("مثلاً ۱ یا د-۲ (دلخواه)")
+        self.code.setPlaceholderText(t("مثلاً ۱ یا د-۲ (دلخواه)"))
         self.full_name = QLineEdit()
         self.position = QComboBox()
         self.position.setEditable(True)
@@ -74,15 +74,15 @@ class StaffDialog(QDialog):
         self.notes = QPlainTextEdit()
         self.notes.setFixedHeight(60)
 
-        form.addRow("آیدی / کود *", self.code)
-        form.addRow("نام مکمل *", self.full_name)
-        form.addRow("وظیفه", self.position)
-        form.addRow("شماره تلفن", self.phone)
-        form.addRow("نوع پرداخت", self.pay_type)
-        form.addRow("معاش ماهانه", self.base_salary)
-        form.addRow("فیصدی از معالجات", self.commission)
+        form.addRow(t("آیدی / کود *"), self.code)
+        form.addRow(t("نام مکمل *"), self.full_name)
+        form.addRow(t("وظیفه"), self.position)
+        form.addRow(t("شماره تلفن"), self.phone)
+        form.addRow(t("نوع پرداخت"), self.pay_type)
+        form.addRow(t("معاش ماهانه"), self.base_salary)
+        form.addRow(t("فیصدی از معالجات"), self.commission)
         form.addRow("", self.is_provider)
-        form.addRow("یادداشت", self.notes)
+        form.addRow(t("یادداشت"), self.notes)
         layout.addLayout(form)
 
         if member:
@@ -113,14 +113,14 @@ class StaffDialog(QDialog):
     def _save(self):
         code = self.code.text().strip()
         if not code:
-            QMessageBox.warning(self, "خطا", "آیدی / کود الزامی است.")
+            QMessageBox.warning(self, t("خطا"), t("آیدی / کود الزامی است."))
             return
         if not self.full_name.text().strip():
-            QMessageBox.warning(self, "خطا", "نام مکمل الزامی است.")
+            QMessageBox.warning(self, t("خطا"), t("نام مکمل الزامی است."))
             return
         exclude = self.member["id"] if self.member else None
         if staff_model.code_exists(code, exclude_id=exclude):
-            QMessageBox.warning(self, "خطا", "این آیدی قبلاً ثبت شده است.")
+            QMessageBox.warning(self, t("خطا"), t("این آیدی قبلاً ثبت شده است."))
             return
         provider = 1 if self.is_provider.isChecked() else 0
         if self.member:
@@ -149,7 +149,7 @@ class StaffPaymentDialog(QDialog):
         super().__init__(parent)
         self.staff_id = staff_id
         self.payment_id = None
-        self.setWindowTitle("ثبت پرداخت به کارمند")
+        self.setWindowTitle(t("ثبت پرداخت به کارمند"))
         self.setMinimumWidth(400)
         layout = setup_form_dialog(
             self, "ثبت پرداخت به کارمند", "فیصدی، معاش یا پاداش", "💵")
@@ -168,19 +168,19 @@ class StaffPaymentDialog(QDialog):
         if suggested > 0:
             self.amount.setValue(suggested)
         self.period = QLineEdit()
-        self.period.setPlaceholderText("مثلاً حمل ۱۴۰۵")
+        self.period.setPlaceholderText(t("مثلاً حمل ۱۴۰۵"))
         self.method = QComboBox()
-        self.method.addItem("نقدی", "cash")
-        self.method.addItem("انتقال بانکی", "bank")
+        self.method.addItem(t("نقدی"), "cash")
+        self.method.addItem(t("انتقال بانکی"), "bank")
         self.date = JalaliDateEdit()
         self.notes = QLineEdit()
 
-        form.addRow("نوع پرداخت", self.kind)
-        form.addRow("مبلغ *", self.amount)
-        form.addRow("دوره", self.period)
-        form.addRow("روش", self.method)
-        form.addRow("تاریخ", self.date)
-        form.addRow("یادداشت", self.notes)
+        form.addRow(t("نوع پرداخت"), self.kind)
+        form.addRow(t("مبلغ *"), self.amount)
+        form.addRow(t("دوره"), self.period)
+        form.addRow(t("روش"), self.method)
+        form.addRow(t("تاریخ"), self.date)
+        form.addRow(t("یادداشت"), self.notes)
         layout.addLayout(form)
 
         buttons = QDialogButtonBox(
@@ -194,7 +194,7 @@ class StaffPaymentDialog(QDialog):
 
     def _save(self):
         if self.amount.value() <= 0:
-            QMessageBox.warning(self, "خطا", "مبلغ باید بیشتر از صفر باشد.")
+            QMessageBox.warning(self, t("خطا"), t("مبلغ باید بیشتر از صفر باشد."))
             return
         uid = session.current_user["id"] if session.current_user else None
         self.payment_id = staff_model.add_payment(
@@ -226,8 +226,7 @@ class StaffDetailDialog(QDialog):
     def __init__(self, parent=None, staff_id: int = 0):
         super().__init__(parent)
         self.staff_id = staff_id
-        self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
-        self.setWindowTitle("حساب و پرداخت‌های کارمند")
+        self.setWindowTitle(t("حساب و پرداخت‌های کارمند"))
         self.setMinimumSize(720, 560)
         layout = QVBoxLayout(self)
         layout.setSpacing(14)
@@ -241,7 +240,7 @@ class StaffDetailDialog(QDialog):
         head.addWidget(name)
         head.addWidget(pos)
         head.addStretch(1)
-        add_btn = QPushButton("➕ ثبت پرداخت")
+        add_btn = QPushButton(t("➕ ثبت پرداخت"))
         add_btn.setObjectName("Success")
         add_btn.clicked.connect(self._add_payment)
         head.addWidget(add_btn)
@@ -258,8 +257,7 @@ class StaffDetailDialog(QDialog):
         layout.addLayout(grid)
 
         self.table = QTableWidget(0, 7)
-        self.table.setHorizontalHeaderLabels(
-            ["رسید", "تاریخ", "نوع", "دوره", "مبلغ", "روش", "عملیات"])
+        self.table.setHorizontalHeaderLabels([t("رسید"), t("تاریخ"), t("نوع"), t("دوره"), t("مبلغ"), t("روش"), t("عملیات")])
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setAlternatingRowColors(True)
         prepare_table(self.table)
@@ -269,7 +267,7 @@ class StaffDetailDialog(QDialog):
             6, QHeaderView.ResizeMode.ResizeToContents)
         layout.addWidget(self.table, 1)
 
-        close_btn = QPushButton("بستن")
+        close_btn = QPushButton(t("بستن"))
         close_btn.setObjectName("Secondary")
         close_btn.clicked.connect(self.accept)
         layout.addWidget(close_btn, 0, Qt.AlignmentFlag.AlignLeft)
@@ -305,11 +303,11 @@ class StaffDetailDialog(QDialog):
             self.table.setItem(r, 1, QTableWidgetItem(
                 helpers.jalali_date(p.get("pay_date"))))
             self.table.setItem(r, 2, QTableWidgetItem(
-                staff_model.PAYMENT_KINDS.get(p.get("kind"), p.get("kind", ""))))
+                t(staff_model.PAYMENT_KINDS.get(p.get("kind"), p.get("kind", "")))))
             self.table.setItem(r, 3, QTableWidgetItem(p.get("period") or "—"))
             self.table.setItem(r, 4, QTableWidgetItem(
                 helpers.format_money(p.get("amount", 0))))
-            method = {"cash": "نقدی", "bank": "بانکی"}.get(
+            method = {"cash": t("نقدی"), "bank": t("بانکی")}.get(
                 p.get("method"), p.get("method", ""))
             self.table.setItem(r, 5, QTableWidgetItem(method))
             self.table.setCellWidget(r, 6, actions_cell([
@@ -321,7 +319,7 @@ class StaffDetailDialog(QDialog):
 
     def _delete_payment(self, pid):
         if QMessageBox.question(
-            self, "حذف", "این پرداخت حذف شود؟"
+            self, t("حذف"), t("این پرداخت حذف شود؟")
         ) == QMessageBox.StandardButton.Yes:
             staff_model.delete_payment(pid)
             self.refresh()
@@ -339,11 +337,11 @@ class StaffPage(QWidget):
         layout.setSpacing(16)
 
         bar = QHBoxLayout()
-        hint = QLabel("ثبت داکتران و کارمندان کلینیک و مدیریت معاش و فیصدی آن‌ها")
+        hint = QLabel(t("ثبت داکتران و کارمندان کلینیک و مدیریت معاش و فیصدی آن‌ها"))
         hint.setObjectName("SectionHint")
         bar.addWidget(hint)
         bar.addStretch(1)
-        add_btn = QPushButton("➕ کارمند / داکتر جدید")
+        add_btn = QPushButton(t("➕ کارمند / داکتر جدید"))
         add_btn.setMinimumHeight(44)
         add_btn.clicked.connect(self._add_staff)
         bar.addWidget(add_btn)
@@ -351,8 +349,8 @@ class StaffPage(QWidget):
 
         self.table = QTableWidget(0, 9)
         self.table.setHorizontalHeaderLabels([
-            "کود", "نام", "وظیفه", "نوع پرداخت", "فیصدی کسب‌شده",
-            "پرداخت‌شده", "باقیمانده", "وضعیت", "عملیات"])
+            t("کود"), t("نام"), t("وظیفه"), t("نوع پرداخت"), t("فیصدی کسب‌شده"),
+            t("پرداخت‌شده"), t("باقیمانده"), t("وضعیت"), t("عملیات")])
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(
             QAbstractItemView.SelectionBehavior.SelectRows)
@@ -393,7 +391,7 @@ class StaffPage(QWidget):
 
     def _delete_staff(self, m):
         if QMessageBox.question(
-            self, "حذف", f"«{m['full_name']}» و تمام پرداخت‌هایش حذف شود؟"
+            self, t("حذف"), t(f"«{m['full_name']}» و تمام پرداخت‌هایش حذف شود؟")
         ) == QMessageBox.StandardButton.Yes:
             staff_model.delete(m["id"])
             self.refresh()
@@ -412,7 +410,7 @@ class StaffPage(QWidget):
             self.table.setItem(r, 1, name_item)
             self.table.setItem(r, 2, QTableWidgetItem(m.get("position") or "—"))
             self.table.setItem(r, 3, QTableWidgetItem(
-                staff_model.PAY_TYPES.get(m.get("pay_type"), "")))
+                t(staff_model.PAY_TYPES.get(m.get("pay_type"), ""))))
             self.table.setItem(r, 4, QTableWidgetItem(
                 helpers.format_money(s["commission_earned"])))
             self.table.setItem(r, 5, QTableWidgetItem(
@@ -420,7 +418,7 @@ class StaffPage(QWidget):
             bal_item = QTableWidgetItem(helpers.format_money(s["commission_balance"]))
             self.table.setItem(r, 6, bal_item)
             self.table.setItem(r, 7, QTableWidgetItem(
-                "فعال" if m.get("is_active") else "غیرفعال"))
+                t("فعال") if m.get("is_active") else t("غیرفعال")))
 
             self.table.setCellWidget(r, 8, actions_cell([
                 make_button("حساب", "primary", "مشاهده حساب و ثبت پرداخت",

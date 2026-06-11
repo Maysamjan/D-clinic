@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
 
 from ...models import odontogram as odo
 from ...services import jalali
+from ...services.i18n import t
 from .dialog_header import setup_form_dialog
 
 
@@ -41,8 +42,8 @@ class _ToothDialog(QDialog):
         if ci >= 0:
             self.condition.setCurrentIndex(ci)
         self.note = QLineEdit(current.get("note", ""))
-        form.addRow("وضعیت", self.condition)
-        form.addRow("یادداشت", self.note)
+        form.addRow(t("وضعیت"), self.condition)
+        form.addRow(t("یادداشت"), self.note)
         layout.addLayout(form)
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save
@@ -63,7 +64,7 @@ class OdontogramWidget(QWidget):
         root.setContentsMargins(6, 6, 6, 6)
         root.setSpacing(12)
 
-        hint = QLabel("روی هر دندان کلیک کنید تا وضعیت آن را ثبت کنید.")
+        hint = QLabel(t("روی هر دندان کلیک کنید تا وضعیت آن را ثبت کنید."))
         hint.setObjectName("SectionHint")
         root.addWidget(hint)
 
@@ -89,12 +90,12 @@ class OdontogramWidget(QWidget):
         row.setSpacing(4)
         row.setDirection(QHBoxLayout.Direction.LeftToRight)
         row.addStretch(1)
-        for t in teeth:
-            btn = QPushButton(jalali.to_persian_digits(t))
+        for tooth_n in teeth:
+            btn = QPushButton(jalali.to_persian_digits(tooth_n))
             btn.setFixedSize(38, 50)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.clicked.connect(lambda _, tooth=t: self._edit_tooth(tooth))
-            self._buttons[t] = btn
+            btn.clicked.connect(lambda _, tooth=tooth_n: self._edit_tooth(tooth))
+            self._buttons[tooth_n] = btn
             row.addWidget(btn)
         row.addStretch(1)
         return row

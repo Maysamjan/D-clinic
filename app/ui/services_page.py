@@ -12,13 +12,13 @@ from PyQt6.QtWidgets import (
 from ..models import service_price as service_model
 from ..models import treatment as treatment_model
 from ..utils import helpers
+from ..services.i18n import t
 from .widgets.actions import actions_cell, make_button, prepare_table
 
 
 class _PriceDialog(QDialog):
     def __init__(self, parent=None, title="افزودن", name="", price=0.0):
         super().__init__(parent)
-        self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.setWindowTitle(title)
         self.setMinimumWidth(340)
         layout = QVBoxLayout(self)
@@ -30,8 +30,8 @@ class _PriceDialog(QDialog):
         self.price.setGroupSeparatorShown(True)
         self.price.setSuffix(" افغانی")
         self.price.setValue(float(price))
-        form.addRow("نام *", self.name)
-        form.addRow("قیمت", self.price)
+        form.addRow(t("نام *"), self.name)
+        form.addRow(t("قیمت"), self.price)
         layout.addLayout(form)
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save
@@ -44,7 +44,7 @@ class _PriceDialog(QDialog):
 
     def _validate(self):
         if not self.name.text().strip():
-            QMessageBox.warning(self, "خطا", "نام الزامی است.")
+            QMessageBox.warning(self, t("خطا"), t("نام الزامی است."))
             return
         self.accept()
 
@@ -56,21 +56,21 @@ class ServicesPage(QWidget):
         layout.setContentsMargins(20, 20, 20, 20)
         tabs = QTabWidget()
         layout.addWidget(tabs)
-        tabs.addTab(self._build_services_tab(), "لیست قیمت خدمات")
-        tabs.addTab(self._build_treatments_tab(), "انواع معالجه")
+        tabs.addTab(self._build_services_tab(), t("لیست قیمت خدمات"))
+        tabs.addTab(self._build_treatments_tab(), t("انواع معالجه"))
 
     # -- Services ---------------------------------------------------------
     def _build_services_tab(self):
         tab = QWidget()
         lay = QVBoxLayout(tab)
         bar = QHBoxLayout()
-        add_btn = QPushButton("➕ خدمت جدید")
+        add_btn = QPushButton(t("➕ خدمت جدید"))
         add_btn.clicked.connect(self._add_service)
         bar.addWidget(add_btn)
         bar.addStretch(1)
         lay.addLayout(bar)
         self.services_table = QTableWidget(0, 4)
-        self.services_table.setHorizontalHeaderLabels(["نام خدمت", "قیمت", "وضعیت", "عملیات"])
+        self.services_table.setHorizontalHeaderLabels([t("نام خدمت"), t("قیمت"), t("وضعیت"), t("عملیات")])
         self._setup_table(self.services_table)
         lay.addWidget(self.services_table)
         return tab
@@ -79,7 +79,7 @@ class ServicesPage(QWidget):
         dlg = _PriceDialog(self, "خدمت جدید")
         if dlg.exec():
             if service_model.exists(dlg.name.text()):
-                QMessageBox.warning(self, "خطا", "این خدمت قبلاً ثبت شده است.")
+                QMessageBox.warning(self, t("خطا"), t("این خدمت قبلاً ثبت شده است."))
                 return
             service_model.create(dlg.name.text(), dlg.price.value())
             self.refresh()
@@ -92,7 +92,7 @@ class ServicesPage(QWidget):
 
     def _delete_service(self, s):
         if QMessageBox.question(
-            self, "حذف", f"خدمت «{s['name']}» حذف شود؟"
+            self, t("حذف"), t(f"خدمت «{s['name']}» حذف شود؟")
         ) == QMessageBox.StandardButton.Yes:
             service_model.delete(s["id"])
             self.refresh()
@@ -102,14 +102,13 @@ class ServicesPage(QWidget):
         tab = QWidget()
         lay = QVBoxLayout(tab)
         bar = QHBoxLayout()
-        add_btn = QPushButton("➕ نوع معالجه جدید")
+        add_btn = QPushButton(t("➕ نوع معالجه جدید"))
         add_btn.clicked.connect(self._add_treatment)
         bar.addWidget(add_btn)
         bar.addStretch(1)
         lay.addLayout(bar)
         self.treatments_table = QTableWidget(0, 4)
-        self.treatments_table.setHorizontalHeaderLabels(
-            ["نوع معالجه", "قیمت پیش‌فرض", "وضعیت", "عملیات"])
+        self.treatments_table.setHorizontalHeaderLabels([t("نوع معالجه"), t("قیمت پیش‌فرض"), t("وضعیت"), t("عملیات")])
         self._setup_table(self.treatments_table)
         lay.addWidget(self.treatments_table)
         return tab
@@ -118,7 +117,7 @@ class ServicesPage(QWidget):
         dlg = _PriceDialog(self, "نوع معالجه جدید")
         if dlg.exec():
             if treatment_model.exists(dlg.name.text()):
-                QMessageBox.warning(self, "خطا", "این معالجه قبلاً ثبت شده است.")
+                QMessageBox.warning(self, t("خطا"), t("این معالجه قبلاً ثبت شده است."))
                 return
             treatment_model.create(dlg.name.text(), dlg.price.value())
             self.refresh()
@@ -131,7 +130,7 @@ class ServicesPage(QWidget):
 
     def _delete_treatment(self, t):
         if QMessageBox.question(
-            self, "حذف", f"معالجه «{t['name']}» حذف شود؟"
+            self, t("حذف"), t(f"معالجه «{t['name']}» حذف شود؟")
         ) == QMessageBox.StandardButton.Yes:
             treatment_model.delete(t["id"])
             self.refresh()
@@ -161,20 +160,20 @@ class ServicesPage(QWidget):
             self.services_table.setItem(r, 1, QTableWidgetItem(
                 helpers.format_money(s["price"])))
             self.services_table.setItem(r, 2, QTableWidgetItem(
-                "فعال" if s["is_active"] else "غیرفعال"))
+                t("فعال") if s["is_active"] else t("غیرفعال")))
             self.services_table.setCellWidget(r, 3, self._row_actions(
                 lambda _, ss=s: self._edit_service(ss),
                 lambda _, ss=s: self._delete_service(ss)))
 
         self.treatments_table.setRowCount(0)
-        for t in treatment_model.all_treatments():
+        for tr in treatment_model.all_treatments():
             r = self.treatments_table.rowCount()
             self.treatments_table.insertRow(r)
-            self.treatments_table.setItem(r, 0, QTableWidgetItem(t["name"]))
+            self.treatments_table.setItem(r, 0, QTableWidgetItem(tr["name"]))
             self.treatments_table.setItem(r, 1, QTableWidgetItem(
-                helpers.format_money(t["default_price"])))
+                helpers.format_money(tr["default_price"])))
             self.treatments_table.setItem(r, 2, QTableWidgetItem(
-                "فعال" if t["is_active"] else "غیرفعال"))
+                t("فعال") if tr["is_active"] else t("غیرفعال")))
             self.treatments_table.setCellWidget(r, 3, self._row_actions(
-                lambda _, tt=t: self._edit_treatment(tt),
-                lambda _, tt=t: self._delete_treatment(tt)))
+                lambda _, tt=tr: self._edit_treatment(tt),
+                lambda _, tt=tr: self._delete_treatment(tt)))

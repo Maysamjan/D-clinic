@@ -21,3 +21,12 @@ def update(name: str, owner_name: str, phone: str, address: str,
            address = ?, email = ?, logo_path = ? WHERE id = 1""",
         (name, owner_name, phone, address, email, logo_path),
     )
+
+
+def get_language() -> str:
+    row = db.query_one("SELECT language FROM clinics WHERE id = 1")
+    return (row["language"] if row and row["language"] else "fa")
+
+
+def set_language(lang: str) -> None:
+    db.execute("UPDATE clinics SET language = ? WHERE id = 1", (lang,))

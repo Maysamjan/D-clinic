@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
 from ..models import inventory as inv_model
 from ..services import session
 from ..utils import helpers
+from ..services.i18n import t
 from .widgets.actions import actions_cell, make_button, prepare_table
 from .widgets.dialog_header import setup_form_dialog
 from .widgets.jalali_date_edit import JalaliDateEdit
@@ -71,17 +72,17 @@ class ItemDialog(QDialog):
         self.notes = QPlainTextEdit()
         self.notes.setFixedHeight(56)
 
-        form.addRow("نام قلم *", self.name)
-        form.addRow("دسته", self.category)
-        form.addRow("واحد", self.unit)
+        form.addRow(t("نام قلم *"), self.name)
+        form.addRow(t("دسته"), self.category)
+        form.addRow(t("واحد"), self.unit)
         if not item:
-            form.addRow("موجودی اولیه", self.quantity)
-        form.addRow("حداقل موجودی (هشدار)", self.min_quantity)
-        form.addRow("قیمت فی واحد", self.unit_price)
-        form.addRow("تهیه‌کننده", self.supplier)
+            form.addRow(t("موجودی اولیه"), self.quantity)
+        form.addRow(t("حداقل موجودی (هشدار)"), self.min_quantity)
+        form.addRow(t("قیمت فی واحد"), self.unit_price)
+        form.addRow(t("تهیه‌کننده"), self.supplier)
         form.addRow("", self.has_expiry)
-        form.addRow("تاریخ انقضا", self.expiry)
-        form.addRow("یادداشت", self.notes)
+        form.addRow(t("تاریخ انقضا"), self.expiry)
+        form.addRow(t("یادداشت"), self.notes)
         layout.addLayout(form)
 
         if item:
@@ -109,7 +110,7 @@ class ItemDialog(QDialog):
 
     def _save(self):
         if not self.name.text().strip():
-            QMessageBox.warning(self, "خطا", "نام قلم الزامی است.")
+            QMessageBox.warning(self, t("خطا"), t("نام قلم الزامی است."))
             return
         expiry = self.expiry.iso_date() if self.has_expiry.isChecked() else None
         if self.item:
@@ -161,10 +162,10 @@ class StockDialog(QDialog):
             self.reason.addItem(inv_model.REASONS["adjust"], "adjust")
         self.date = JalaliDateEdit()
         self.note = QLineEdit()
-        form.addRow("مقدار *", self.amount)
-        form.addRow("علت", self.reason)
-        form.addRow("تاریخ", self.date)
-        form.addRow("یادداشت", self.note)
+        form.addRow(t("مقدار *"), self.amount)
+        form.addRow(t("علت"), self.reason)
+        form.addRow(t("تاریخ"), self.date)
+        form.addRow(t("یادداشت"), self.note)
         layout.addLayout(form)
 
         buttons = QDialogButtonBox(
@@ -178,13 +179,13 @@ class StockDialog(QDialog):
 
     def _save(self):
         if self.amount.value() <= 0:
-            QMessageBox.warning(self, "خطا", "مقدار باید بیشتر از صفر باشد.")
+            QMessageBox.warning(self, t("خطا"), t("مقدار باید بیشتر از صفر باشد."))
             return
         change = self.amount.value() if self.mode == "in" else -self.amount.value()
         if self.mode == "out" and self.amount.value() > float(self.item.get("quantity", 0)):
             if QMessageBox.question(
-                self, "هشدار",
-                "مقدار خروج بیشتر از موجودی فعلی است. ادامه می‌دهید؟"
+                self, t("هشدار"),
+                t("مقدار خروج بیشتر از موجودی فعلی است. ادامه می‌دهید؟")
             ) != QMessageBox.StandardButton.Yes:
                 return
         uid = session.current_user["id"] if session.current_user else None
@@ -215,17 +216,17 @@ class InventoryPage(QWidget):
         bar = QHBoxLayout()
         bar.setSpacing(10)
         self.search = QLineEdit()
-        self.search.setPlaceholderText("🔍  جستجوی نام دوا، تجهیزات یا تهیه‌کننده ...")
+        self.search.setPlaceholderText(t("🔍  جستجوی نام دوا، تجهیزات یا تهیه‌کننده ..."))
         self.search.setMinimumHeight(42)
         self.search.textChanged.connect(self.refresh)
         bar.addWidget(self.search, 1)
         self.cat_filter = QComboBox()
-        self.cat_filter.addItem("همه دسته‌ها", None)
+        self.cat_filter.addItem(t("همه دسته‌ها"), None)
         for key, label in inv_model.CATEGORIES.items():
             self.cat_filter.addItem(label, key)
         self.cat_filter.currentIndexChanged.connect(self.refresh)
         bar.addWidget(self.cat_filter)
-        self.add_btn = QPushButton("➕ قلم جدید")
+        self.add_btn = QPushButton(t("➕ قلم جدید"))
         self.add_btn.setMinimumHeight(42)
         self.add_btn.clicked.connect(self._add_item)
         bar.addWidget(self.add_btn)
@@ -237,8 +238,8 @@ class InventoryPage(QWidget):
 
         self.table = QTableWidget(0, 7)
         self.table.setHorizontalHeaderLabels([
-            "نام", "دسته", "موجودی", "قیمت فی واحد",
-            "ارزش کل", "تاریخ انقضا", "عملیات"])
+            t("نام"), t("دسته"), t("موجودی"), t("قیمت فی واحد"),
+            t("ارزش کل"), t("تاریخ انقضا"), t("عملیات")])
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(
             QAbstractItemView.SelectionBehavior.SelectRows)
@@ -272,7 +273,7 @@ class InventoryPage(QWidget):
 
     def _delete_item(self, item):
         if QMessageBox.question(
-            self, "حذف", f"قلم «{item['name']}» و سوابق آن حذف شود؟"
+            self, t("حذف"), t(f"قلم «{item['name']}» و سوابق آن حذف شود؟")
         ) == QMessageBox.StandardButton.Yes:
             inv_model.delete(item["id"])
             self.refresh()
@@ -284,7 +285,7 @@ class InventoryPage(QWidget):
             category=self.cat_filter.currentData(),
             search=self.search.text())
         self.count_label.setText(
-            f"{helpers.jalali_digits(len(items))} قلم  •  "
+            helpers.jalali_digits(len(items)) + " " + t("قلم") + "  •  "
             f"ارزش کل گدام: {helpers.format_money(inv_model.total_value())}")
         today = datetime.date.today().isoformat()
         self.table.setRowCount(0)
@@ -295,7 +296,7 @@ class InventoryPage(QWidget):
             name_item.setData(Qt.ItemDataRole.UserRole, it["id"])
             self.table.setItem(r, 0, name_item)
             self.table.setItem(r, 1, QTableWidgetItem(
-                inv_model.CATEGORIES.get(it.get("category"), "")))
+                t(inv_model.CATEGORIES.get(it.get("category"), ""))))
             qty_text = (helpers.jalali_digits(_num(it.get("quantity")))
                         + " " + (it.get("unit") or ""))
             low = (it.get("min_quantity") or 0) > 0 and \

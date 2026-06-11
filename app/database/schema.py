@@ -358,6 +358,11 @@ def _migrate() -> None:
         if col not in pcols:
             db.execute(f"ALTER TABLE patients ADD COLUMN {col} TEXT DEFAULT ''")
 
+    # Clinic UI language.
+    ccols = {r["name"] for r in db.query_all("PRAGMA table_info(clinics)")}
+    if "language" not in ccols:
+        db.execute("ALTER TABLE clinics ADD COLUMN language TEXT DEFAULT 'fa'")
+
     # Prescription dispense quantity.
     if db.query_one("SELECT name FROM sqlite_master "
                     "WHERE type='table' AND name='prescription_items'"):

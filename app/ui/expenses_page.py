@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
 from ..models import expense as expense_model
 from ..services import jalali, session
 from ..utils import helpers, printing
+from ..services.i18n import t
 from .widgets.actions import actions_cell, make_button, prepare_table
 from .widgets.dialog_header import setup_form_dialog
 from .widgets.jalali_date_edit import JalaliDateEdit
@@ -44,11 +45,11 @@ class ExpenseDialog(QDialog):
         self.paid_to = QLineEdit()
         self.date = JalaliDateEdit()
 
-        form.addRow("دسته", self.category)
-        form.addRow("شرح *", self.description)
-        form.addRow("مبلغ *", self.amount)
-        form.addRow("پرداخت به", self.paid_to)
-        form.addRow("تاریخ", self.date)
+        form.addRow(t("دسته"), self.category)
+        form.addRow(t("شرح *"), self.description)
+        form.addRow(t("مبلغ *"), self.amount)
+        form.addRow(t("پرداخت به"), self.paid_to)
+        form.addRow(t("تاریخ"), self.date)
         layout.addLayout(form)
 
         if expense:
@@ -71,10 +72,10 @@ class ExpenseDialog(QDialog):
 
     def _save(self):
         if not self.description.text().strip():
-            QMessageBox.warning(self, "خطا", "شرح مصرف الزامی است.")
+            QMessageBox.warning(self, t("خطا"), t("شرح مصرف الزامی است."))
             return
         if self.amount.value() <= 0:
-            QMessageBox.warning(self, "خطا", "مبلغ باید بیشتر از صفر باشد.")
+            QMessageBox.warning(self, t("خطا"), t("مبلغ باید بیشتر از صفر باشد."))
             return
         uid = session.current_user["id"] if session.current_user else None
         if self.expense:
@@ -114,7 +115,7 @@ class ExpensesPage(QWidget):
         # Period + actions
         bar = QHBoxLayout()
         bar.setSpacing(10)
-        bar.addWidget(QLabel("دوره:"))
+        bar.addWidget(QLabel(t("دوره:")))
         self.month = QComboBox()
         for m in range(1, 13):
             self.month.addItem(jalali.jalali_month_name(m), m)
@@ -129,10 +130,10 @@ class ExpensesPage(QWidget):
         bar.addWidget(self.month)
         bar.addWidget(self.year)
         bar.addStretch(1)
-        daily_btn = QPushButton("🖨 راپور روزانه صندوق")
+        daily_btn = QPushButton(t("🖨 راپور روزانه صندوق"))
         daily_btn.setObjectName("Secondary")
         daily_btn.clicked.connect(self._daily_report)
-        add_btn = QPushButton("➕ ثبت مصرف")
+        add_btn = QPushButton(t("➕ ثبت مصرف"))
         add_btn.clicked.connect(self._add)
         bar.addWidget(daily_btn)
         bar.addWidget(add_btn)
@@ -141,17 +142,17 @@ class ExpensesPage(QWidget):
         # Profit/loss cards
         grid = QGridLayout()
         grid.setSpacing(12)
-        self.box_income, self.val_income = _card("درآمد (دریافتی‌ها)", "#0C7A43")
-        self.box_exp, self.val_exp = _card("مصارف", "#D97706")
-        self.box_staff, self.val_staff = _card("پرداخت به کارمندان", "#2563EB")
-        self.box_net, self.val_net = _card("سود خالص", "#0E9F8E")
+        self.box_income, self.val_income = _card(t("درآمد (دریافتی‌ها)"), "#0C7A43")
+        self.box_exp, self.val_exp = _card(t("مصارف"), "#D97706")
+        self.box_staff, self.val_staff = _card(t("پرداخت به کارمندان"), "#2563EB")
+        self.box_net, self.val_net = _card(t("سود خالص"), "#0E9F8E")
         for i, b in enumerate([self.box_income, self.box_exp, self.box_staff, self.box_net]):
             grid.addWidget(b, 0, i)
         layout.addLayout(grid)
 
         self.table = QTableWidget(0, 6)
         self.table.setHorizontalHeaderLabels([
-            "تاریخ", "دسته", "شرح", "پرداخت به", "مبلغ", "عملیات"])
+            t("تاریخ"), t("دسته"), t("شرح"), t("پرداخت به"), t("مبلغ"), t("عملیات")])
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setAlternatingRowColors(True)
         prepare_table(self.table)
@@ -184,7 +185,7 @@ class ExpensesPage(QWidget):
 
     def _delete(self, eid):
         if QMessageBox.question(
-            self, "حذف", "این مصرف حذف شود؟"
+            self, t("حذف"), t("این مصرف حذف شود؟")
         ) == QMessageBox.StandardButton.Yes:
             expense_model.delete(eid)
             self.refresh()
@@ -211,7 +212,7 @@ class ExpensesPage(QWidget):
             self.table.setItem(r, 0, QTableWidgetItem(
                 helpers.jalali_date(e.get("expense_date"))))
             self.table.setItem(r, 1, QTableWidgetItem(
-                expense_model.CATEGORIES.get(e.get("category"), "")))
+                t(expense_model.CATEGORIES.get(e.get("category"), ""))))
             self.table.setItem(r, 2, QTableWidgetItem(e.get("description") or "—"))
             self.table.setItem(r, 3, QTableWidgetItem(e.get("paid_to") or "—"))
             self.table.setItem(r, 4, QTableWidgetItem(

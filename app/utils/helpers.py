@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 
 from .. import config
-from ..services import jalali
+from ..services import i18n, jalali
 
 
 def format_money(value, with_currency: bool = True, persian: bool = True) -> str:
@@ -19,18 +19,33 @@ def format_money(value, with_currency: bool = True, persian: bool = True) -> str
         text = f"{int(amount):,}"
     else:
         text = f"{amount:,.2f}"
-    if persian:
-        text = jalali.to_persian_digits(text)
+    text = i18n.digits(text)
     if with_currency:
         text = f"{text} {config.CURRENCY}"
     return text
 
 
+def long_date(value) -> str:
+    """A long, human date in the active language."""
+    if not value:
+        return "—"
+    if i18n.get_language() == "en":
+        import datetime
+        try:
+            d = datetime.date.fromisoformat(str(value)[:10])
+            return d.strftime("%d %B %Y")
+        except ValueError:
+            return str(value)
+    return jalali.long_jalali(value)
+
+
 def jalali_date(value) -> str:
-    """Convert an ISO date/datetime string to a Jalali display string."""
+    """Display a date in the active language (Jalali for fa, Gregorian for en)."""
     if not value:
         return "—"
     value = str(value)
+    if i18n.get_language() == "en":
+        return value[:16].replace("T", " ") if len(value) > 10 else value[:10]
     if len(value) > 10:  # has time component
         return jalali.datetime_to_jalali_str(value)
     return jalali.date_to_jalali_str(value)
@@ -88,9 +103,10 @@ def load_stylesheet() -> str:
 
 
 def gender_label(value: str) -> str:
-    return {"male": "مرد", "female": "زن"}.get(value, value or "—")
+    label = {"male": "مرد", "female": "زن"}.get(value, value or "—")
+    return i18n.t(label)
 
 
 def jalali_digits(text) -> str:
-    """Convert ASCII digits to Persian digits (safe for any input)."""
-    return jalali.to_persian_digits(str(text or ""))
+    """Localised digits — Persian in fa mode, ASCII in en mode."""
+    return i18n.digits(text)
