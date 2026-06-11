@@ -33,10 +33,13 @@ from ..models import clinic as clinic_model
 from ..models import staff as staff_model
 from ..models import (
     attachment as attachment_model,
+    expense as expense_model,
     invoice as invoice_model,
     patient as patient_model,
+    prescription as prescription_model,
     visit as visit_model,
 )
+from ..database import db
 from . import helpers
 
 
@@ -368,6 +371,76 @@ def staff_receipt_html(payment_id: int) -> str:
       </tr>
     </table>
     """
+    return _wrap(body)
+
+
+# ---------------------------------------------------------------------------
+# Prescription
+# ---------------------------------------------------------------------------
+
+def prescription_html(presc_id: int) -> str:
+    pres = prescription_model.get(presc_id)
+    if not pres:
+        return ""
+    p = patient_model.get(pres["patient_id"])
+    drugs = prescription_model.items(presc_id)
+    rows = [[helpers.jalali_digits(i), it["drug"], it["dosage"] or "—",
+             it["instructions"] or "—"]
+            for i, it in enumerate(drugs, 1)]
+
+    body = _header("نسخه (℞)", doc_date=helpers.jalali_date(pres.get("presc_date")))
+    body += _section("مشخصات مریض") + _info_table([
+        [("نام مریض", p.get("full_name", "") if p else ""),
+         ("کود مریض", helpers.jalali_digits(p.get("code", "") if p else ""))],
+        [("سن", helpers.jalali_digits(p.get("age")) if p and p.get("age") else "—"),
+         ("داکتر", pres.get("doctor_name") or "—")],
+    ])
+    if p and (p.get("allergies") or "").strip():
+        body += (f"<div style='background:#FEF2F4; color:#B11334; padding:8pt 12pt;"
+                 f" margin-top:8pt; font-weight:bold;'>⚠ حساسیت‌ها: "
+                 f"{p['allergies']}</div>")
+    body += "<div style='height:10pt;'></div>"
+    body += _section("℞  داروهای تجویزشده") + _grid(
+        ["#", "دوا", "مقدار", "دستور مصرف"], rows, widths=[40, None, 90, None])
+    if pres.get("notes"):
+        body += f"<div class='dsub' style='margin-top:10pt;'>یادداشت: {pres['notes']}</div>"
+    body += ("<table width='100%' cellspacing='0' cellpadding='0'>"
+             "<tr><td align='left' class='dsub' style='padding-top:40pt;'>"
+             "...........................<br>امضای داکتر</td></tr></table>")
+    return _wrap(body)
+
+
+# ---------------------------------------------------------------------------
+# Daily cash report
+# ---------------------------------------------------------------------------
+
+def daily_report_html(date_iso: str) -> str:
+    pay = db.query_one(
+        "SELECT COALESCE(SUM(amount),0) AS s, COUNT(*) AS c FROM payments "
+        "WHERE pay_date = ?", (date_iso,))
+    cash = db.query_one(
+        "SELECT COALESCE(SUM(amount),0) AS s FROM payments "
+        "WHERE pay_date = ? AND method = 'cash'", (date_iso,))
+    card = db.query_one(
+        "SELECT COALESCE(SUM(amount),0) AS s FROM payments "
+        "WHERE pay_date = ? AND method != 'cash'", (date_iso,))
+    visits_row = db.query_one(
+        "SELECT COUNT(*) AS c FROM visits WHERE visit_date = ?", (date_iso,))
+    expenses = expense_model.total_between(date_iso, date_iso)
+    income = float(pay["s"]) if pay else 0.0
+    net = income - expenses
+
+    body = _header("راپور روزانه صندوق", doc_date=helpers.jalali_date(date_iso))
+    body += _section("خلاصه روز") + _info_table([
+        [("تعداد ویزیت‌ها", helpers.jalali_digits(visits_row["c"] if visits_row else 0)),
+         ("تعداد پرداخت‌ها", helpers.jalali_digits(pay["c"] if pay else 0))],
+        [("دریافت نقدی", helpers.format_money(cash["s"] if cash else 0)),
+         ("دریافت کارت/انتقال", helpers.format_money(card["s"] if card else 0))],
+        [("مجموع دریافتی‌ها", helpers.format_money(income)),
+         ("مجموع مصارف امروز", helpers.format_money(expenses))],
+        [("باقی نقد صندوق (تقریبی)",
+          f"<b style='color:#0A6B61;'>{helpers.format_money(net)}</b>", 3)],
+    ])
     return _wrap(body)
 
 

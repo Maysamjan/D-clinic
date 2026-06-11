@@ -14,15 +14,17 @@ def _make_code(patient_id: int) -> str:
 
 def create(full_name: str, phone: str, gender: str, age: Optional[int],
            address: str, notes: str = "",
-           registered_at: Optional[str] = None) -> int:
+           registered_at: Optional[str] = None, allergies: str = "",
+           medical_history: str = "", blood_type: str = "") -> int:
     """Create a patient and assign a permanent human-friendly code."""
     if not registered_at:
         registered_at = datetime.date.today().isoformat()
     pid = db.insert(
         """INSERT INTO patients (full_name, phone, gender, age, address,
-           notes, registered_at) VALUES (?, ?, ?, ?, ?, ?, ?)""",
+           notes, registered_at, allergies, medical_history, blood_type)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (full_name.strip(), phone.strip(), gender, age, address, notes,
-         registered_at),
+         registered_at, allergies, medical_history, blood_type),
     )
     code = _make_code(pid)
     db.execute("UPDATE patients SET code = ? WHERE id = ?", (code, pid))
@@ -30,12 +32,15 @@ def create(full_name: str, phone: str, gender: str, age: Optional[int],
 
 
 def update(patient_id: int, full_name: str, phone: str, gender: str,
-           age: Optional[int], address: str, notes: str = "") -> None:
+           age: Optional[int], address: str, notes: str = "",
+           allergies: str = "", medical_history: str = "",
+           blood_type: str = "") -> None:
     db.execute(
         """UPDATE patients SET full_name = ?, phone = ?, gender = ?, age = ?,
-           address = ?, notes = ? WHERE id = ?""",
+           address = ?, notes = ?, allergies = ?, medical_history = ?,
+           blood_type = ? WHERE id = ?""",
         (full_name.strip(), phone.strip(), gender, age, address, notes,
-         patient_id),
+         allergies, medical_history, blood_type, patient_id),
     )
 
 

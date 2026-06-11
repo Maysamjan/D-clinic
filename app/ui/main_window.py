@@ -11,7 +11,9 @@ from PyQt6.QtWidgets import (
 from .. import config
 from ..models import clinic as clinic_model
 from ..services import session
+from .appointments_page import AppointmentsPage
 from .dashboard import DashboardPage
+from .expenses_page import ExpensesPage
 from .inventory_page import InventoryPage
 from .patient_file import PatientFilePage
 from .patients_page import PatientsPage
@@ -82,10 +84,12 @@ class MainWindow(QMainWindow):
 
         nav_items = [
             ("dashboard", "🏠  داشبورد", "dashboard"),
+            ("appointments", "🗓  نوبت‌دهی", "appointments"),
             ("patients", "👥  مریض‌ها", "patients"),
             ("staff", "🩺  داکتران و کارمندان", "staff"),
             ("salaries", "💵  معاشات", "salaries"),
             ("inventory", "📦  گدام و انبار", "inventory"),
+            ("expenses", "🧾  مصارف و حسابداری", "expenses"),
             ("reports", "📊  گزارش‌ها", "reports"),
             ("services", "💲  خدمات و قیمت‌ها", "services"),
             ("users", "🔑  کاربران", "users"),
@@ -151,6 +155,11 @@ class MainWindow(QMainWindow):
         self.dashboard = DashboardPage()
         self._add_page("dashboard", self.dashboard)
 
+        if session.can("appointments"):
+            self.appointments = AppointmentsPage()
+            self.appointments.open_patient.connect(self._open_patient)
+            self._add_page("appointments", self.appointments)
+
         self.patients = PatientsPage()
         self.patients.open_patient.connect(self._open_patient)
         self._add_page("patients", self.patients)
@@ -168,6 +177,9 @@ class MainWindow(QMainWindow):
         if session.can("inventory"):
             self.inventory = InventoryPage()
             self._add_page("inventory", self.inventory)
+        if session.can("expenses"):
+            self.expenses = ExpensesPage()
+            self._add_page("expenses", self.expenses)
         if session.can("reports"):
             self.reports = ReportsPage()
             self._add_page("reports", self.reports)
@@ -190,10 +202,12 @@ class MainWindow(QMainWindow):
     # -- Navigation -------------------------------------------------------
     _TITLES = {
         "dashboard": "داشبورد",
+        "appointments": "نوبت‌دهی",
         "patients": "مدیریت مریض‌ها",
         "staff": "داکتران و کارمندان",
         "salaries": "معاشات کارمندان",
         "inventory": "گدام و انبار",
+        "expenses": "مصارف و حسابداری",
         "reports": "گزارش‌ها",
         "services": "خدمات و قیمت‌ها",
         "users": "مدیریت کاربران",

@@ -31,6 +31,7 @@ class DashboardPage(QScrollArea):
         self.cards_grid = QGridLayout()
         self.cards_grid.setSpacing(14)
         self.card_today = StatCard("مریض‌های امروز", "۰", "👥", "#0E9F8E")
+        self.card_appts = StatCard("نوبت‌های امروز", "۰", "🗓", "#7C3AED")
         self.card_total = StatCard("مجموع مریض‌ها", "۰", "🗂", "#6366F1")
         self.card_today_rev = StatCard("درآمد امروز", "۰", "💵", "#10A05B")
         self.card_month_rev = StatCard("درآمد این ماه", "۰", "📈", "#0891B2")
@@ -38,10 +39,11 @@ class DashboardPage(QScrollArea):
         self.card_new_today = StatCard("ثبت‌نام امروز", "۰", "🆕", "#E0962A")
 
         for i, card in enumerate([
-            self.card_today, self.card_new_today, self.card_total,
-            self.card_today_rev, self.card_month_rev, self.card_outstanding,
+            self.card_today, self.card_appts, self.card_new_today,
+            self.card_total, self.card_today_rev, self.card_month_rev,
+            self.card_outstanding,
         ]):
-            self.cards_grid.addWidget(card, i // 3, i % 3)
+            self.cards_grid.addWidget(card, i // 4, i % 4)
         self.root.addLayout(self.cards_grid)
 
         # Charts row 1
@@ -72,7 +74,11 @@ class DashboardPage(QScrollArea):
         return card
 
     def refresh(self):
+        import datetime
+        from ..models import appointment as appt_model
         s = stats.dashboard_summary()
+        self.card_appts.set_value(helpers.jalali_digits(
+            appt_model.count_on(datetime.date.today().isoformat())))
         self.card_today.set_value(helpers.jalali_digits(s["today_patients"]))
         self.card_new_today.set_value(helpers.jalali_digits(s["today_registered"]))
         self.card_total.set_value(helpers.jalali_digits(s["total_patients"]))

@@ -209,6 +209,70 @@ CREATE TABLE IF NOT EXISTS inventory_movements (
 );
 CREATE INDEX IF NOT EXISTS idx_invmov_item ON inventory_movements(item_id);
 
+-- Appointments / scheduling --------------------------------------------
+CREATE TABLE IF NOT EXISTS appointments (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    patient_id    INTEGER,
+    patient_name  TEXT DEFAULT '',           -- for walk-ins / new prospects
+    phone         TEXT DEFAULT '',
+    staff_id      INTEGER,
+    doctor_name   TEXT DEFAULT '',
+    appt_date     TEXT NOT NULL DEFAULT (date('now')),
+    appt_time     TEXT DEFAULT '',            -- HH:MM
+    reason        TEXT DEFAULT '',
+    status        TEXT DEFAULT 'scheduled',   -- scheduled | done | cancelled | noshow
+    notes         TEXT DEFAULT '',
+    created_at    TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE SET NULL,
+    FOREIGN KEY (staff_id) REFERENCES staff(id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS idx_appt_date ON appointments(appt_date);
+
+-- Dental chart (one row per tooth per patient) ---------------------------
+CREATE TABLE IF NOT EXISTS tooth_chart (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    patient_id    INTEGER NOT NULL,
+    tooth         TEXT NOT NULL,              -- FDI number, e.g. 26
+    condition     TEXT DEFAULT 'healthy',
+    note          TEXT DEFAULT '',
+    updated_at    TEXT DEFAULT (datetime('now')),
+    UNIQUE (patient_id, tooth),
+    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+);
+
+-- Prescriptions ----------------------------------------------------------
+CREATE TABLE IF NOT EXISTS prescriptions (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    patient_id    INTEGER NOT NULL,
+    doctor_name   TEXT DEFAULT '',
+    presc_date    TEXT NOT NULL DEFAULT (date('now')),
+    notes         TEXT DEFAULT '',
+    created_by    INTEGER,
+    created_at    TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS prescription_items (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    prescription_id INTEGER NOT NULL,
+    drug            TEXT NOT NULL,
+    dosage          TEXT DEFAULT '',
+    instructions    TEXT DEFAULT '',
+    FOREIGN KEY (prescription_id) REFERENCES prescriptions(id) ON DELETE CASCADE
+);
+
+-- Clinic expenses --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS expenses (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    category      TEXT DEFAULT 'other',
+    description   TEXT DEFAULT '',
+    amount        REAL NOT NULL DEFAULT 0,
+    expense_date  TEXT NOT NULL DEFAULT (date('now')),
+    paid_to       TEXT DEFAULT '',
+    created_by    INTEGER,
+    created_at    TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_expense_date ON expenses(expense_date);
+
 -- Backup history ----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS backups (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -286,6 +350,12 @@ def _migrate() -> None:
     for row in db.query_all("SELECT id FROM staff WHERE code IS NULL OR code = ''"):
         db.execute("UPDATE staff SET code = ? WHERE id = ?",
                    (str(row["id"]), row["id"]))
+
+    # Patient medical/safety fields.
+    pcols = {r["name"] for r in db.query_all("PRAGMA table_info(patients)")}
+    for col in ("allergies", "medical_history", "blood_type"):
+        if col not in pcols:
+            db.execute(f"ALTER TABLE patients ADD COLUMN {col} TEXT DEFAULT ''")
 
 
 def _seed_defaults() -> None:

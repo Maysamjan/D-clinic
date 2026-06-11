@@ -16,8 +16,14 @@ consistent professional teal theme and the bundled high-quality
 | Module | Description |
 |---|---|
 | 🔐 **Login & Users** | Three roles — Admin, Doctor, Receptionist — with role-based permissions |
-| 🩺 **Staff & Payroll** | Register doctors & employees; track salary / commission earned from treatments; record payouts and **print payment receipts** |
+| 🗓 **Appointments** | Day-by-day scheduling, status (waiting / done / cancelled / no-show), open patient file directly |
+| 🦷 **Dental Chart (Odontogram)** | Colour-coded 32-tooth chart; set per-tooth condition (caries, filled, root canal, crown, implant, extracted) |
+| ℞ **Prescriptions** | Build a drug list and print a professional prescription (with allergy alert) |
+| 🩹 **Medical History** | Allergies, chronic conditions and blood type with a prominent safety alert on the patient file |
+| 🩺 **Staff & Payroll** | Register doctors & employees (manual short ID); salary / commission earned; payouts with **printable receipts** |
+| 💵 **Salaries** | Pay monthly salaries by period with paid/remaining status and receipts |
 | 📦 **Inventory / Store** | Register medicines, equipment and consumables; stock-in / stock-out movements; low-stock and expiry alerts; total store value |
+| 🧾 **Expenses & Accounting** | Record clinic expenses, monthly **profit/loss**, and a printable **end-of-day cash report** |
 | 👥 **Patients** | One permanent file per patient, auto patient code, fast search by name / phone / code |
 | 📋 **Timeline** | Social-media style chronological timeline of every visit & treatment |
 | 🦷 **Visits / Treatments** | Date, doctor, treatment type, tooth, notes, cost — admin-extendable treatment types |

@@ -18,13 +18,16 @@ from ..models import (
     invoice as invoice_model,
     patient as patient_model,
     payment as payment_model,
+    prescription as prescription_model,
     visit as visit_model,
 )
 from ..services import session
 from ..utils import helpers, printing
 from .dialogs import PatientDialog, PaymentDialog, VisitDialog
 from .invoice_dialog import InvoiceDialog
+from .prescription_dialog import PrescriptionDialog
 from .widgets.actions import actions_cell, make_button, prepare_table
+from .widgets.odontogram import OdontogramWidget
 from .widgets.timeline import TimelineWidget
 
 
@@ -78,6 +81,15 @@ class PatientFilePage(QWidget):
         top.addWidget(self.print_file_btn)
         layout.addLayout(top)
 
+        # Medical alert (allergies / conditions)
+        self.alert_label = QLabel()
+        self.alert_label.setWordWrap(True)
+        self.alert_label.setVisible(False)
+        self.alert_label.setStyleSheet(
+            "background:#FEF2F4; color:#B11334; border:1px solid #F6C9D2;"
+            "border-radius:10px; padding:9px 14px; font-weight:700;")
+        layout.addWidget(self.alert_label)
+
         # Summary cards
         grid = QGridLayout()
         grid.setSpacing(12)
@@ -96,7 +108,9 @@ class PatientFilePage(QWidget):
         layout.addWidget(self.tabs, 1)
 
         self._build_overview_tab()
+        self._build_chart_tab()
         self._build_visits_tab()
+        self._build_prescriptions_tab()
         self._build_payments_tab()
         self._build_invoices_tab()
         self._build_files_tab()
@@ -123,7 +137,8 @@ class PatientFilePage(QWidget):
         self.info_labels: dict[str, QLabel] = {}
         for key, label in [
             ("phone", "تلفن"), ("gender", "جنسیت"), ("age", "سن"),
-            ("address", "آدرس"), ("registered_at", "تاریخ ثبت"),
+            ("blood_type", "گروه خون"), ("address", "آدرس"),
+            ("registered_at", "تاریخ ثبت"), ("medical_history", "سوابق طبی"),
             ("notes", "یادداشت"),
         ]:
             row = QHBoxLayout()
@@ -250,6 +265,37 @@ class PatientFilePage(QWidget):
         lay.addWidget(self.files_table)
         self.tabs.addTab(tab, "فایل‌ها و تصاویر")
 
+    def _build_chart_tab(self):
+        tab = QWidget()
+        lay = QVBoxLayout(tab)
+        lay.setContentsMargins(12, 12, 12, 12)
+        self.odontogram = OdontogramWidget()
+        lay.addWidget(self.odontogram)
+        self.tabs.addTab(tab, "🦷 چارت دندان")
+
+    def _build_prescriptions_tab(self):
+        tab = QWidget()
+        lay = QVBoxLayout(tab)
+        bar = QHBoxLayout()
+        self.add_presc_btn = QPushButton("℞ نسخه‌ی جدید")
+        self.add_presc_btn.setObjectName("Success")
+        self.add_presc_btn.clicked.connect(self._add_prescription)
+        bar.addWidget(self.add_presc_btn)
+        bar.addStretch(1)
+        lay.addLayout(bar)
+
+        self.presc_table = QTableWidget(0, 4)
+        self.presc_table.setHorizontalHeaderLabels(
+            ["تاریخ", "داکتر", "تعداد دوا", "عملیات"])
+        prepare_table(self.presc_table)
+        self.presc_table.setEditTriggers(
+            QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.presc_table.setAlternatingRowColors(True)
+        h = self.presc_table.horizontalHeader()
+        h.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        lay.addWidget(self.presc_table)
+        self.tabs.addTab(tab, "℞ نسخه‌ها")
+
     # -- Permissions ------------------------------------------------------
     def _apply_permissions(self):
         can_visit = session.can("visit_add")
@@ -257,6 +303,7 @@ class PatientFilePage(QWidget):
         self.add_visit_btn2.setVisible(can_visit)
         self.add_payment_btn.setVisible(session.can("payment_add"))
         self.add_invoice_btn.setVisible(session.can("invoices"))
+        self.add_presc_btn.setVisible(can_visit)
         self.edit_btn.setVisible(session.can("patient_edit"))
 
     # -- Data loading -----------------------------------------------------
@@ -281,7 +328,24 @@ class PatientFilePage(QWidget):
         self.info_labels["address"].setText(p.get("address") or "—")
         self.info_labels["registered_at"].setText(
             helpers.jalali_date(p.get("registered_at")))
+        self.info_labels["blood_type"].setText(p.get("blood_type") or "—")
+        self.info_labels["medical_history"].setText(p.get("medical_history") or "—")
         self.info_labels["notes"].setText(p.get("notes") or "—")
+
+        # Allergy / medical alert banner
+        alerts = []
+        if (p.get("allergies") or "").strip():
+            alerts.append("⚠ حساسیت‌ها: " + p["allergies"])
+        if (p.get("medical_history") or "").strip():
+            alerts.append("🩺 سوابق طبی: " + p["medical_history"])
+        if alerts:
+            self.alert_label.setText("    ".join(alerts))
+            self.alert_label.setVisible(True)
+        else:
+            self.alert_label.setVisible(False)
+
+        self.odontogram.set_patient(self.patient_id)
+        self._fill_prescriptions()
 
         summary = patient_model.financial_summary(self.patient_id)
         self.val_visits.setText(helpers.jalali_digits(summary["visits"]))
@@ -364,6 +428,42 @@ class PatientFilePage(QWidget):
             self.invoices_table.setCellWidget(r, 5, actions_cell([
                 make_button("چاپ صورتحساب", "primary", "چاپ صورتحساب",
                             lambda iid=inv["id"]: self._print_invoice(iid))]))
+
+    def _fill_prescriptions(self):
+        self.presc_table.setRowCount(0)
+        for pr in prescription_model.for_patient(self.patient_id):
+            r = self.presc_table.rowCount()
+            self.presc_table.insertRow(r)
+            self.presc_table.setItem(r, 0, QTableWidgetItem(
+                helpers.jalali_date(pr.get("presc_date"))))
+            self.presc_table.setItem(r, 1, QTableWidgetItem(
+                pr.get("doctor_name") or "—"))
+            n = len(prescription_model.items(pr["id"]))
+            self.presc_table.setItem(r, 2, QTableWidgetItem(
+                helpers.jalali_digits(n)))
+            self.presc_table.setCellWidget(r, 3, actions_cell([
+                make_button("چاپ نسخه", "primary", "چاپ نسخه",
+                            lambda pid=pr["id"]: self._print_prescription(pid)),
+                make_button("حذف", "danger", "حذف",
+                            lambda pid=pr["id"]: self._delete_prescription(pid)),
+            ]))
+
+    def _add_prescription(self):
+        dlg = PrescriptionDialog(self, patient_id=self.patient_id)
+        if dlg.exec():
+            self.refresh()
+            if getattr(dlg, "prescription_id", None):
+                self._print_prescription(dlg.prescription_id)
+
+    def _delete_prescription(self, pid):
+        if QMessageBox.question(
+            self, "حذف", "این نسخه حذف شود؟"
+        ) == QMessageBox.StandardButton.Yes:
+            prescription_model.delete(pid)
+            self.refresh()
+
+    def _print_prescription(self, pid):
+        self._print_or_pdf(printing.prescription_html(pid), "نسخه")
 
     def _fill_files(self):
         self.files_table.setRowCount(0)

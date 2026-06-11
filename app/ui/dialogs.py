@@ -57,14 +57,26 @@ class PatientDialog(QDialog):
         self.age = QSpinBox()
         self.age.setRange(0, 130)
         self.address = QLineEdit()
+        self.blood_type = QComboBox()
+        self.blood_type.addItem("—", "")
+        for bt in ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]:
+            self.blood_type.addItem(bt, bt)
+        self.allergies = QLineEdit()
+        self.allergies.setPlaceholderText("مثلاً حساسیت به پنسلین (در صورت وجود)")
+        self.medical_history = QPlainTextEdit()
+        self.medical_history.setFixedHeight(52)
+        self.medical_history.setPlaceholderText("بیماری‌های زمینه‌ای: فشار خون، دیابت، قلبی ...")
         self.notes = QPlainTextEdit()
-        self.notes.setFixedHeight(70)
+        self.notes.setFixedHeight(52)
 
         form.addRow("نام مکمل *", self.full_name)
         form.addRow("شماره تلفن", self.phone)
         form.addRow("جنسیت", self.gender)
         form.addRow("سن", self.age)
         form.addRow("آدرس", self.address)
+        form.addRow("گروه خون", self.blood_type)
+        form.addRow("⚠ حساسیت‌ها", self.allergies)
+        form.addRow("سوابق طبی", self.medical_history)
         form.addRow("یادداشت", self.notes)
         layout.addLayout(form)
 
@@ -87,6 +99,11 @@ class PatientDialog(QDialog):
         if p.get("age") is not None:
             self.age.setValue(int(p["age"]))
         self.address.setText(p.get("address", ""))
+        bi = self.blood_type.findData(p.get("blood_type") or "")
+        if bi >= 0:
+            self.blood_type.setCurrentIndex(bi)
+        self.allergies.setText(p.get("allergies", "") or "")
+        self.medical_history.setPlainText(p.get("medical_history", "") or "")
         self.notes.setPlainText(p.get("notes", ""))
 
     def _save(self):
@@ -99,13 +116,18 @@ class PatientDialog(QDialog):
             patient_model.update(
                 self.patient["id"], name, self.phone.text(),
                 self.gender.currentData(), age, self.address.text(),
-                self.notes.toPlainText(),
+                self.notes.toPlainText(), allergies=self.allergies.text(),
+                medical_history=self.medical_history.toPlainText(),
+                blood_type=self.blood_type.currentData(),
             )
             self.patient_id = self.patient["id"]
         else:
             self.patient_id = patient_model.create(
                 name, self.phone.text(), self.gender.currentData(), age,
                 self.address.text(), self.notes.toPlainText(),
+                allergies=self.allergies.text(),
+                medical_history=self.medical_history.toPlainText(),
+                blood_type=self.blood_type.currentData(),
             )
         self.accept()
 
