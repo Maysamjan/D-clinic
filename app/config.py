@@ -58,6 +58,8 @@ CURRENCY = "AFN"
 
 # Application metadata
 APP_NAME = "D-Clinic"
+# Company / brand name shown on the login, sidebar and activation screens.
+BRAND = "Zenth Soft"
 APP_TITLE = "سیستم مدیریت کلینیک دندانپزشکی"  # Dental Clinic Management System
 
 

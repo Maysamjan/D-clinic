@@ -23,7 +23,7 @@ class ActivationWindow(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle(config.APP_NAME + " — فعال‌سازی")
+        self.setWindowTitle(config.BRAND + " — " + t("فعال‌سازی"))
         self.resize(720, 600)
         self._build()
 
@@ -44,7 +44,7 @@ class ActivationWindow(QWidget):
         lay.setContentsMargins(34, 30, 34, 30)
         lay.setSpacing(14)
 
-        logo = QLabel("🦷  " + config.APP_NAME)
+        logo = QLabel("🦷  " + config.BRAND)
         logo.setObjectName("LoginTitle")
         logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title = QLabel(t("فعال‌سازی نرم‌افزار"))

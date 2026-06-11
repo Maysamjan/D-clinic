@@ -22,7 +22,7 @@ class LoginWindow(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle(config.APP_NAME + " — ورود")
+        self.setWindowTitle(config.BRAND + " — " + t("ورود"))
         self.resize(960, 620)
         self._build()
 
@@ -43,7 +43,7 @@ class LoginWindow(QWidget):
         logo = QLabel("🦷")
         logo.setStyleSheet("font-size: 96px;")
         logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        name = QLabel(config.APP_NAME)
+        name = QLabel(config.BRAND)
         name.setStyleSheet("color:#ffffff; font-size:40px; font-weight:bold;")
         name.setAlignment(Qt.AlignmentFlag.AlignCenter)
         sub = QLabel(config.APP_TITLE)

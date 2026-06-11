@@ -320,9 +320,9 @@ class InventoryPage(QWidget):
 
     def _actions(self, it):
         return actions_cell([
-            make_button("ورود", "success", "ورود به گدام",
+            make_button("ورود جنس", "success", "ورود به گدام",
                         lambda x=it: self._stock(x, "in")),
-            make_button("خروج", "warn", "خروج از گدام",
+            make_button("خروج جنس", "warn", "خروج از گدام",
                         lambda x=it: self._stock(x, "out")),
             make_button("ویرایش", "default", "ویرایش قلم",
                         lambda x=it: self._edit_item(x)),

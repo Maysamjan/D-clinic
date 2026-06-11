@@ -31,7 +31,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self._on_logout = on_logout
         self._on_relaunch = on_relaunch
-        self.setWindowTitle(config.APP_NAME + " — " + config.APP_TITLE)
+        self.setWindowTitle(config.BRAND + " — " + t(config.APP_TITLE))
         self.setLayoutDirection(
             Qt.LayoutDirection.RightToLeft if is_rtl()
             else Qt.LayoutDirection.LeftToRight)
@@ -71,7 +71,7 @@ class MainWindow(QMainWindow):
         lay.setContentsMargins(16, 22, 16, 20)
         lay.setSpacing(7)
 
-        brand = QLabel("🦷  " + config.APP_NAME)
+        brand = QLabel("🦷  " + config.BRAND)
         brand.setObjectName("BrandTitle")
         sub = QLabel(t("مدیریت کلینیک دندانپزشکی"))
         sub.setObjectName("BrandSub")
