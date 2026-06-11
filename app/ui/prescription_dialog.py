@@ -23,22 +23,30 @@ COMMON_DRUGS = [
 
 
 class PrescriptionDialog(QDialog):
-    def __init__(self, parent=None, patient_id: int = 0):
+    def __init__(self, parent=None, patient_id: int = 0,
+                 prescription: dict | None = None):
         super().__init__(parent)
-        self.patient_id = patient_id
-        self.prescription_id = None
-        self.setWindowTitle(t("نسخه‌ی جدید"))
-        self.setMinimumWidth(560)
-        layout = setup_form_dialog(self, "نسخه‌ی جدید",
-                                   "تجویز دوا برای مریض", "℞")
+        self.patient_id = patient_id or (prescription or {}).get("patient_id", 0)
+        self.prescription = prescription
+        self.prescription_id = prescription["id"] if prescription else None
+        is_edit = prescription is not None
+        self.setWindowTitle(t("ویرایش نسخه") if is_edit else t("نسخه‌ی جدید"))
+        self.setMinimumWidth(620)
+        layout = setup_form_dialog(
+            self, "ویرایش نسخه" if is_edit else "نسخه‌ی جدید",
+            "تجویز دوا برای مریض", "℞")
 
+        drow = QHBoxLayout()
+        from PyQt6.QtWidgets import QLabel
+        drow.addWidget(QLabel(t("داکتر") + ":"))
         self.doctor = QComboBox()
         self.doctor.setEditable(True)
         for d in staff_model.providers():
             self.doctor.addItem(d["full_name"], d["id"])
-        if session.current_user:
+        if is_edit:
+            self.doctor.setCurrentText(prescription.get("doctor_name", ""))
+        elif session.current_user:
             self.doctor.setCurrentText(session.current_user.get("full_name", ""))
-        drow = QHBoxLayout()
         drow.addWidget(self.doctor, 1)
         layout.addLayout(drow)
 
@@ -77,30 +85,44 @@ class PrescriptionDialog(QDialog):
         self.notes.setPlaceholderText(t("یادداشت (اختیاری)"))
         layout.addWidget(self.notes)
 
+        # Load existing items when editing
+        if is_edit:
+            self.notes.setText(prescription.get("notes", ""))
+            for it in presc_model.items(prescription["id"]):
+                self._insert_row(it.get("drug", ""), it.get("dosage", ""),
+                                 it.get("quantity", ""), it.get("instructions", ""))
+
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save
             | QDialogButtonBox.StandardButton.Cancel)
-        buttons.button(QDialogButtonBox.StandardButton.Save).setText("صدور و چاپ")
-        buttons.button(QDialogButtonBox.StandardButton.Cancel).setText("لغو")
+        buttons.button(QDialogButtonBox.StandardButton.Save).setText(
+            t("ذخیره") if is_edit else t("صدور و چاپ"))
+        buttons.button(QDialogButtonBox.StandardButton.Cancel).setText(t("لغو"))
         buttons.accepted.connect(self._save)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+
+    def _insert_row(self, drug, dosage, quantity, instr):
+        r = self.table.rowCount()
+        self.table.insertRow(r)
+        self.table.setItem(r, 0, QTableWidgetItem(drug))
+        self.table.setItem(r, 1, QTableWidgetItem(dosage))
+        self.table.setItem(r, 2, QTableWidgetItem(quantity))
+        self.table.setItem(r, 3, QTableWidgetItem(instr))
+        rm = QPushButton("✕")
+        rm.setObjectName("Danger")
+        rm.setFixedWidth(40)
+        rm.clicked.connect(
+            lambda _, row_item=self.table.item(r, 0): self._remove(row_item))
+        self.table.setCellWidget(r, 4, rm)
 
     def _add_item(self):
         drug = self.drug.currentText().strip()
         if not drug:
             QMessageBox.warning(self, t("خطا"), t("نام دوا را وارد کنید."))
             return
-        r = self.table.rowCount()
-        self.table.insertRow(r)
-        self.table.setItem(r, 0, QTableWidgetItem(drug))
-        self.table.setItem(r, 1, QTableWidgetItem(self.dosage.text()))
-        self.table.setItem(r, 2, QTableWidgetItem(self.quantity.text()))
-        self.table.setItem(r, 3, QTableWidgetItem(self.instr.text()))
-        rm = QPushButton("🗑")
-        rm.setObjectName("Danger")
-        rm.clicked.connect(lambda _, row_item=self.table.item(r, 0): self._remove(row_item))
-        self.table.setCellWidget(r, 4, rm)
+        self._insert_row(drug, self.dosage.text(), self.quantity.text(),
+                         self.instr.text())
         self.drug.setCurrentText("")
         self.dosage.clear()
         self.quantity.clear()
@@ -124,7 +146,12 @@ class PrescriptionDialog(QDialog):
             QMessageBox.warning(self, t("خطا"), t("حداقل یک دوا اضافه کنید."))
             return
         uid = session.current_user["id"] if session.current_user else None
-        self.prescription_id = presc_model.create(
-            self.patient_id, self.doctor.currentText(), items,
-            notes=self.notes.text(), created_by=uid)
+        if self.prescription:
+            presc_model.update(self.prescription["id"], self.doctor.currentText(),
+                               items, notes=self.notes.text())
+            self.prescription_id = self.prescription["id"]
+        else:
+            self.prescription_id = presc_model.create(
+                self.patient_id, self.doctor.currentText(), items,
+                notes=self.notes.text(), created_by=uid)
         self.accept()

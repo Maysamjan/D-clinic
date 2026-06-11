@@ -39,12 +39,13 @@ class DashboardPage(QScrollArea):
         self.card_outstanding = StatCard(t("مطالبات معوقه"), "۰", "⚠", "#E23D5B")
         self.card_new_today = StatCard(t("ثبت‌نام امروز"), "۰", "🆕", "#E0962A")
 
-        for i, card in enumerate([
+        self._cards = [
             self.card_today, self.card_appts, self.card_new_today,
             self.card_total, self.card_today_rev, self.card_month_rev,
             self.card_outstanding,
-        ]):
-            self.cards_grid.addWidget(card, i // 4, i % 4)
+        ]
+        self._card_cols = 0
+        self._relayout_cards(4)
         self.root.addLayout(self.cards_grid)
 
         # Charts row 1
@@ -61,6 +62,21 @@ class DashboardPage(QScrollArea):
         self.root.addWidget(self._chart_card(t("رایج‌ترین معالجات"), self.treatments_chart))
 
         self.root.addStretch(1)
+
+    def _relayout_cards(self, cols: int):
+        if cols == self._card_cols:
+            return
+        self._card_cols = cols
+        while self.cards_grid.count():
+            self.cards_grid.takeAt(0)
+        for i, card in enumerate(self._cards):
+            self.cards_grid.addWidget(card, i // cols, i % cols)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        w = self.viewport().width()
+        cols = 4 if w > 1080 else 3 if w > 800 else 2 if w > 540 else 1
+        self._relayout_cards(cols)
 
     def _chart_card(self, title: str, chart: QWidget) -> QFrame:
         card = QFrame()

@@ -5,7 +5,7 @@ from __future__ import annotations
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QButtonGroup, QFrame, QHBoxLayout, QLabel, QMainWindow, QMessageBox,
-    QPushButton, QStackedWidget, QVBoxLayout, QWidget
+    QPushButton, QScrollArea, QStackedWidget, QVBoxLayout, QWidget
 )
 
 from .. import config
@@ -36,6 +36,7 @@ class MainWindow(QMainWindow):
             Qt.LayoutDirection.RightToLeft if is_rtl()
             else Qt.LayoutDirection.LeftToRight)
         self.resize(1280, 800)
+        self.setMinimumSize(1000, 600)
         self._nav_buttons: dict[str, QPushButton] = {}
         self._build()
         self._go("dashboard")
@@ -83,6 +84,21 @@ class MainWindow(QMainWindow):
         lay.addWidget(sep)
         lay.addSpacing(10)
 
+        # Scrollable nav area so the menu never overflows on short screens
+        nav_scroll = QScrollArea()
+        nav_scroll.setObjectName("NavScroll")
+        nav_scroll.setWidgetResizable(True)
+        nav_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        nav_scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        nav_container = QWidget()
+        nav_container.setObjectName("NavScroll")
+        nav_lay = QVBoxLayout(nav_container)
+        nav_lay.setContentsMargins(0, 0, 0, 0)
+        nav_lay.setSpacing(7)
+        nav_scroll.setWidget(nav_container)
+        lay.addWidget(nav_scroll, 1)
+
         self._nav_group = QButtonGroup(self)
         self._nav_group.setExclusive(True)
 
@@ -108,10 +124,10 @@ class MainWindow(QMainWindow):
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             btn.clicked.connect(lambda _, k=key: self._go(k))
             self._nav_group.addButton(btn)
-            lay.addWidget(btn)
+            nav_lay.addWidget(btn)
             self._nav_buttons[key] = btn
 
-        lay.addStretch(1)
+        nav_lay.addStretch(1)
 
         sep2 = QFrame()
         sep2.setObjectName("NavSep")

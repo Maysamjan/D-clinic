@@ -460,6 +460,7 @@ _EN: dict[str, str] = {
     "معلومات مریض": "Patient Information",
     "سوابق معالجات و ویزیت‌ها (جدول زمانی)": "Treatment & Visit History (Timeline)",
     "خلاصه مالی": "Financial Summary",
+    "وضعیت دندان‌ها": "Dental Chart",
     "تعداد ویزیت‌ها": "Number of visits",
     "مجموع پرداختی": "Total paid",
     "کود مریض": "Patient code",

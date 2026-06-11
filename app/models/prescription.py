@@ -33,6 +33,24 @@ def create(patient_id: int, doctor_name: str, items: list[tuple],
     return pid
 
 
+def update(presc_id: int, doctor_name: str, items: list[tuple],
+           notes: str = "") -> None:
+    """Replace a prescription's doctor, drugs and notes."""
+    db.execute(
+        "UPDATE prescriptions SET doctor_name = ?, notes = ? WHERE id = ?",
+        (doctor_name, notes, presc_id),
+    )
+    db.execute("DELETE FROM prescription_items WHERE prescription_id = ?",
+               (presc_id,))
+    for item in items:
+        drug, dosage, quantity, instr = item
+        db.execute(
+            "INSERT INTO prescription_items (prescription_id, drug, dosage, "
+            "quantity, instructions) VALUES (?, ?, ?, ?, ?)",
+            (presc_id, drug, dosage, quantity, instr),
+        )
+
+
 def get(presc_id: int) -> Optional[dict]:
     row = db.query_one("SELECT * FROM prescriptions WHERE id = ?", (presc_id,))
     return dict(row) if row else None

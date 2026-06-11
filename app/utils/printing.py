@@ -31,6 +31,7 @@ from PyQt6.QtWidgets import QFileDialog, QMessageBox
 from .. import config
 from ..models import clinic as clinic_model
 from ..models import staff as staff_model
+from ..models import odontogram as odontogram_model
 from ..models import (
     attachment as attachment_model,
     expense as expense_model,
@@ -269,7 +270,24 @@ def patient_file_html(patient_id: int) -> str:
           f"<span style='color:#C0344E;'>{helpers.format_money(summary['balance'])}</span>")],
     ])
 
-    return _wrap(_header(t("پرونده کامل مریض")) + info + timeline + finance)
+    # Dental chart — list teeth that need or had work (non-healthy)
+    chart = odontogram_model.get_chart(patient_id)
+    chart_html = ""
+    crows = []
+    for tooth in sorted(chart.keys()):
+        cond = chart[tooth].get("condition", "healthy")
+        if cond == "healthy":
+            continue
+        label = odontogram_model.CONDITIONS.get(cond, ("", ""))[0]
+        crows.append([helpers.jalali_digits(tooth), t(label),
+                      chart[tooth].get("note") or "—"])
+    if crows:
+        chart_html = (_section(t("وضعیت دندان‌ها")) + _grid(
+            [t("دندان"), t("وضعیت"), t("یادداشت")], crows,
+            widths=[80, 150, None]) + "<div style='height:12pt;'></div>")
+
+    return _wrap(_header(t("پرونده کامل مریض")) + info + timeline
+                 + chart_html + finance)
 
 
 # ---------------------------------------------------------------------------

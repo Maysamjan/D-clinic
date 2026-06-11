@@ -15,8 +15,14 @@ from PyQt6.QtWidgets import (
 
 from ...models import odontogram as odo
 from ...services import jalali
-from ...services.i18n import t
+from ...services.i18n import is_rtl, t
 from .dialog_header import setup_form_dialog
+
+# Short condition codes shown under each tooth number.
+_ABBR = {
+    "healthy": "", "caries": "C", "filled": "F", "rct": "R",
+    "crown": "Cr", "implant": "Im", "extracted": "✕", "missing": "–",
+}
 
 
 def _text_color(bg: str) -> str:
@@ -90,9 +96,11 @@ class OdontogramWidget(QWidget):
         row.setSpacing(4)
         row.setDirection(QHBoxLayout.Direction.LeftToRight)
         row.addStretch(1)
-        for tooth_n in teeth:
-            btn = QPushButton(jalali.to_persian_digits(tooth_n))
-            btn.setFixedSize(38, 50)
+        for idx, tooth_n in enumerate(teeth):
+            if idx == len(teeth) // 2:
+                row.addSpacing(18)  # gap between the two quadrants
+            btn = QPushButton()
+            btn.setFixedSize(46, 62)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             btn.clicked.connect(lambda _, tooth=tooth_n: self._edit_tooth(tooth))
             self._buttons[tooth_n] = btn
@@ -145,14 +153,18 @@ class OdontogramWidget(QWidget):
             cond = chart.get(tooth, {}).get("condition", "healthy")
             _, color = odo.CONDITIONS.get(cond, odo.CONDITIONS["healthy"])
             fg = _text_color(color)
+            abbr = _ABBR.get(cond, "")
+            # Number always on top (bold), condition abbreviation below.
+            num = jalali.to_persian_digits(tooth) if is_rtl() else tooth
+            btn.setText(f"{num}\n{abbr}")
             btn.setStyleSheet(
                 f"QPushButton {{ background:{color}; color:{fg};"
-                f" border:1px solid #94a3b8; border-radius:7px;"
-                f" font-weight:700; font-size:12px; }}"
+                f" border:1px solid #94a3b8; border-radius:8px;"
+                f" font-weight:700; font-size:14px; text-align:center; }}"
                 f"QPushButton:hover {{ border:2px solid #0E9F8E; }}")
             note = chart.get(tooth, {}).get("note", "")
             label = odo.CONDITIONS.get(cond, ("", ""))[0]
-            tip = f"دندان {tooth} — {label}"
+            tip = t("دندان") + f" {tooth} — {t(label)}"
             if note:
                 tip += "\n" + note
             btn.setToolTip(tip)

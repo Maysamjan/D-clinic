@@ -291,9 +291,14 @@ class PatientFilePage(QWidget):
         self.presc_table.setEditTriggers(
             QAbstractItemView.EditTrigger.NoEditTriggers)
         self.presc_table.setAlternatingRowColors(True)
+        self.presc_table.doubleClicked.connect(self._open_presc_selected)
         h = self.presc_table.horizontalHeader()
         h.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        h.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
         lay.addWidget(self.presc_table)
+        hint = QLabel(t("برای ویرایش، روی نسخه دوبار کلیک کنید."))
+        hint.setObjectName("SectionHint")
+        lay.addWidget(hint)
         self.tabs.addTab(tab, t("℞ نسخه‌ها"))
 
     # -- Permissions ------------------------------------------------------
@@ -434,14 +439,17 @@ class PatientFilePage(QWidget):
         for pr in prescription_model.for_patient(self.patient_id):
             r = self.presc_table.rowCount()
             self.presc_table.insertRow(r)
-            self.presc_table.setItem(r, 0, QTableWidgetItem(
-                helpers.jalali_date(pr.get("presc_date"))))
+            date_item = QTableWidgetItem(helpers.jalali_date(pr.get("presc_date")))
+            date_item.setData(Qt.ItemDataRole.UserRole, pr["id"])
+            self.presc_table.setItem(r, 0, date_item)
             self.presc_table.setItem(r, 1, QTableWidgetItem(
                 pr.get("doctor_name") or "—"))
             n = len(prescription_model.items(pr["id"]))
             self.presc_table.setItem(r, 2, QTableWidgetItem(
                 helpers.jalali_digits(n)))
             self.presc_table.setCellWidget(r, 3, actions_cell([
+                make_button("ویرایش", "default", "ویرایش نسخه",
+                            lambda pp=pr: self._edit_prescription(pp)),
                 make_button("چاپ نسخه", "primary", "چاپ نسخه",
                             lambda pid=pr["id"]: self._print_prescription(pid)),
                 make_button("حذف", "danger", "حذف",
@@ -454,6 +462,21 @@ class PatientFilePage(QWidget):
             self.refresh()
             if getattr(dlg, "prescription_id", None):
                 self._print_prescription(dlg.prescription_id)
+
+    def _edit_prescription(self, presc):
+        dlg = PrescriptionDialog(self, patient_id=self.patient_id,
+                                 prescription=presc)
+        if dlg.exec():
+            self.refresh()
+
+    def _open_presc_selected(self):
+        row = self.presc_table.currentRow()
+        if row < 0:
+            return
+        pid = self.presc_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
+        presc = prescription_model.get(pid)
+        if presc:
+            self._edit_prescription(presc)
 
     def _delete_prescription(self, pid):
         if QMessageBox.question(

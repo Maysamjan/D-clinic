@@ -10,8 +10,8 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (
     QAbstractItemView, QFileDialog, QFormLayout, QFrame, QHBoxLayout, QLabel,
-    QLineEdit, QMessageBox, QPushButton, QTableWidget, QTableWidgetItem,
-    QVBoxLayout, QWidget
+    QLineEdit, QMessageBox, QPushButton, QScrollArea, QTableWidget,
+    QTableWidgetItem, QVBoxLayout, QWidget
 )
 
 from .. import config
@@ -32,7 +32,15 @@ class SettingsPage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._logo_path = ""
-        root = QVBoxLayout(self)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        outer.addWidget(scroll)
+        content = QWidget()
+        scroll.setWidget(content)
+        root = QVBoxLayout(content)
         root.setContentsMargins(22, 20, 22, 20)
         root.setSpacing(16)
 
@@ -46,6 +54,7 @@ class SettingsPage(QWidget):
         right.addWidget(self._build_password_card())
         top.addLayout(right, 1)
         root.addLayout(top)
+        root.addStretch(1)
 
     def _build_clinic_card(self) -> QFrame:
         card = QFrame()

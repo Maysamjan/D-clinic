@@ -45,6 +45,7 @@ QToolTip {
     max-height: 1px;
     border: none;
 }
+QScrollArea#NavScroll, QWidget#NavScroll { background: transparent; border: none; }
 QPushButton#NavButton {
     color: #C9DDDB;
     background-color: transparent;
@@ -215,10 +216,11 @@ QPushButton#IconBtn:hover { background:#E6EDF5; }
 QPushButton#ActBtn, QPushButton#ActPrimary, QPushButton#ActDanger,
 QPushButton#ActSuccess, QPushButton#ActWarn {
     border-radius: 8px;
-    padding: 7px 16px;
+    padding: 7px 14px;
     font-size: 13px;
     font-weight: 700;
-    min-height: 18px;
+    min-height: 20px;
+    min-width: 30px;
 }
 QPushButton#ActBtn { background:#EEF2F8; color:#2A3B52; border:1px solid #D4DEEA; }
 QPushButton#ActBtn:hover { background:#E1E8F1; }
