@@ -256,6 +256,7 @@ CREATE TABLE IF NOT EXISTS prescription_items (
     prescription_id INTEGER NOT NULL,
     drug            TEXT NOT NULL,
     dosage          TEXT DEFAULT '',
+    quantity        TEXT DEFAULT '',          -- total to dispense, e.g. ۲۰ عدد / ۲ تخته
     instructions    TEXT DEFAULT '',
     FOREIGN KEY (prescription_id) REFERENCES prescriptions(id) ON DELETE CASCADE
 );
@@ -356,6 +357,15 @@ def _migrate() -> None:
     for col in ("allergies", "medical_history", "blood_type"):
         if col not in pcols:
             db.execute(f"ALTER TABLE patients ADD COLUMN {col} TEXT DEFAULT ''")
+
+    # Prescription dispense quantity.
+    if db.query_one("SELECT name FROM sqlite_master "
+                    "WHERE type='table' AND name='prescription_items'"):
+        icols = {r["name"] for r in
+                 db.query_all("PRAGMA table_info(prescription_items)")}
+        if "quantity" not in icols:
+            db.execute("ALTER TABLE prescription_items "
+                       "ADD COLUMN quantity TEXT DEFAULT ''")
 
 
 def _seed_defaults() -> None:

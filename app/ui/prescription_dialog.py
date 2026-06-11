@@ -48,7 +48,9 @@ class PrescriptionDialog(QDialog):
         self.drug.addItem("")
         self.drug.addItems(COMMON_DRUGS)
         self.dosage = QLineEdit()
-        self.dosage.setPlaceholderText("مقدار، مثلاً ۱ قرص")
+        self.dosage.setPlaceholderText("مقدار مصرف، مثلاً ۱ قرص")
+        self.quantity = QLineEdit()
+        self.quantity.setPlaceholderText("تعداد تحویلی، مثلاً ۲۰ عدد یا ۲ تخته")
         self.instr = QLineEdit()
         self.instr.setPlaceholderText("دستور، مثلاً هر ۸ ساعت بعد از غذا")
         add_btn = QPushButton("افزودن")
@@ -56,17 +58,19 @@ class PrescriptionDialog(QDialog):
         add_btn.clicked.connect(self._add_item)
         add_row.addWidget(self.drug, 2)
         add_row.addWidget(self.dosage, 1)
+        add_row.addWidget(self.quantity, 1)
         add_row.addWidget(self.instr, 2)
         add_row.addWidget(add_btn)
         layout.addLayout(add_row)
 
-        self.table = QTableWidget(0, 4)
-        self.table.setHorizontalHeaderLabels(["دوا", "مقدار", "دستور مصرف", ""])
+        self.table = QTableWidget(0, 5)
+        self.table.setHorizontalHeaderLabels(
+            ["دوا", "مقدار مصرف", "تعداد تحویلی", "دستور مصرف", ""])
         self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.horizontalHeader().setSectionResizeMode(
-            2, self.table.horizontalHeader().ResizeMode.Stretch)
-        self.table.setColumnWidth(3, 56)
+            3, self.table.horizontalHeader().ResizeMode.Stretch)
+        self.table.setColumnWidth(4, 52)
         layout.addWidget(self.table)
 
         self.notes = QLineEdit()
@@ -91,13 +95,15 @@ class PrescriptionDialog(QDialog):
         self.table.insertRow(r)
         self.table.setItem(r, 0, QTableWidgetItem(drug))
         self.table.setItem(r, 1, QTableWidgetItem(self.dosage.text()))
-        self.table.setItem(r, 2, QTableWidgetItem(self.instr.text()))
+        self.table.setItem(r, 2, QTableWidgetItem(self.quantity.text()))
+        self.table.setItem(r, 3, QTableWidgetItem(self.instr.text()))
         rm = QPushButton("🗑")
         rm.setObjectName("Danger")
         rm.clicked.connect(lambda _, row_item=self.table.item(r, 0): self._remove(row_item))
-        self.table.setCellWidget(r, 3, rm)
+        self.table.setCellWidget(r, 4, rm)
         self.drug.setCurrentText("")
         self.dosage.clear()
+        self.quantity.clear()
         self.instr.clear()
 
     def _remove(self, item):
@@ -108,7 +114,8 @@ class PrescriptionDialog(QDialog):
         for r in range(self.table.rowCount()):
             out.append((self.table.item(r, 0).text(),
                         self.table.item(r, 1).text(),
-                        self.table.item(r, 2).text()))
+                        self.table.item(r, 2).text(),
+                        self.table.item(r, 3).text()))
         return out
 
     def _save(self):

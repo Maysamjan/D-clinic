@@ -384,8 +384,9 @@ def prescription_html(presc_id: int) -> str:
         return ""
     p = patient_model.get(pres["patient_id"])
     drugs = prescription_model.items(presc_id)
-    rows = [[helpers.jalali_digits(i), it["drug"], it["dosage"] or "—",
-             it["instructions"] or "—"]
+    rows = [[helpers.jalali_digits(i), it["drug"], it.get("dosage") or "—",
+             helpers.jalali_digits(it.get("quantity") or "") or "—",
+             it.get("instructions") or "—"]
             for i, it in enumerate(drugs, 1)]
 
     body = _header("نسخه (℞)", doc_date=helpers.jalali_date(pres.get("presc_date")))
@@ -401,7 +402,8 @@ def prescription_html(presc_id: int) -> str:
                  f"{p['allergies']}</div>")
     body += "<div style='height:10pt;'></div>"
     body += _section("℞  داروهای تجویزشده") + _grid(
-        ["#", "دوا", "مقدار", "دستور مصرف"], rows, widths=[40, None, 90, None])
+        ["#", "دوا", "مقدار مصرف", "تعداد تحویلی", "دستور مصرف"],
+        rows, widths=[34, None, 78, 90, None])
     if pres.get("notes"):
         body += f"<div class='dsub' style='margin-top:10pt;'>یادداشت: {pres['notes']}</div>"
     body += ("<table width='100%' cellspacing='0' cellpadding='0'>"

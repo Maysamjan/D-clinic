@@ -11,7 +11,11 @@ from ..database import db
 def create(patient_id: int, doctor_name: str, items: list[tuple],
            notes: str = "", presc_date: Optional[str] = None,
            created_by: Optional[int] = None) -> int:
-    """Create a prescription. *items* = list of (drug, dosage, instructions)."""
+    """Create a prescription.
+
+    *items* = list of (drug, dosage, quantity, instructions), where
+    ``quantity`` is the total amount the pharmacy should dispense.
+    """
     if not presc_date:
         presc_date = datetime.date.today().isoformat()
     pid = db.insert(
@@ -19,11 +23,12 @@ def create(patient_id: int, doctor_name: str, items: list[tuple],
            notes, created_by) VALUES (?, ?, ?, ?, ?)""",
         (patient_id, doctor_name, presc_date, notes, created_by),
     )
-    for drug, dosage, instr in items:
+    for item in items:
+        drug, dosage, quantity, instr = item
         db.execute(
             "INSERT INTO prescription_items (prescription_id, drug, dosage, "
-            "instructions) VALUES (?, ?, ?, ?)",
-            (pid, drug, dosage, instr),
+            "quantity, instructions) VALUES (?, ?, ?, ?, ?)",
+            (pid, drug, dosage, quantity, instr),
         )
     return pid
 
