@@ -31,16 +31,33 @@ A Product Key is bound to a single Machine ID. It will not activate any other co
 
 ## 3. Generating a Product Key
 
-Run the keygen tool, which reads the vendor's private key and signs the customer's Machine ID:
+Run the keygen tool, which reads the vendor's private key and signs the customer's Machine ID. As of v1.1.0 you choose the **license type**:
 
 ```
-python tools/keygen.py
+# FULL — perpetual, no patient limit, no watermark (default)
+python tools/keygen.py <MACHINE-ID>
+python tools/keygen.py --full <MACHINE-ID>
+
+# DEMO — expiring + patient-capped + watermarked
+python tools/keygen.py --demo --days 30 --max-patients 50 <MACHINE-ID>
+python tools/keygen.py --demo --expiry 2026-09-01 --max-patients 100 <MACHINE-ID>
 ```
 
 - The tool reads the private key from **`license_private/private_key.hex`**.
-- It takes the customer's **Machine ID** as input and produces a signed **Product Key** for that machine.
+- It takes the customer's **Machine ID** as input and produces a signed **Product Key** (and a matching `.lic` file) for that machine.
+- DEMO terms (type, expiry date, patient cap) are **inside the signed key** — the customer cannot alter them without a new key.
+- Common DEMO durations are **7, 15 or 30 days**; pass any custom value with `--days` or an absolute date with `--expiry`. `--max-patients 0` means no cap.
+
+> See `LICENSING.md` for the customer-facing workflow and the DEMO vs FULL comparison.
 
 > **Requirement:** `tools/keygen.py` and the `license_private/private_key.hex` file are part of the **vendor-only** toolchain. They must be present only on Zenith Soft's secure machine(s) where keys are generated.
+
+### DEMO security (anti-tamper)
+
+- The **digital signature is verified on every startup** against the live machine.
+- Keys are **machine-ID-locked** — a key for one machine fails on any other.
+- **Clock-rollback is detected**: a machine-bound, HMAC-protected run-date record (`data/runstate.dat`) blocks the app if the Windows clock is moved backwards to dodge a demo expiry.
+- Everything is **fully offline**.
 
 ---
 

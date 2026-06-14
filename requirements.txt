@@ -1,1 +1,11 @@
-PyQt6>=6.5.0
+# D-Clinic runtime dependencies
+#
+# The ONLY third-party dependency is PyQt6 (the GUI toolkit). Everything else
+# the app uses ships with the Python standard library (sqlite3, hashlib, hmac,
+# winreg, uuid, platform, datetime, base64, json ...).
+#
+# Pinned to the Qt 6.5 LTS line for a stable, well-tested commercial target on
+# Windows 10 and 11. See docs/WINDOWS_COMPATIBILITY.md for the full
+# Windows 8 / 8.1 / 10 / 11 compatibility analysis (Windows 8/8.1 require the
+# PyQt5 build path documented there, as Qt 6 officially targets Windows 10+).
+PyQt6>=6.5,<6.6

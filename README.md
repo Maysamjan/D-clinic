@@ -35,6 +35,8 @@ consistent professional teal theme and the bundled high-quality
 | 📊 **Dashboard & Reports** | Today's patients, revenue, outstanding balances + revenue / growth / treatment charts |
 | 🖨 **Printing** | Print complete patient file, single visit, or invoice — professional A4 layouts |
 | ⚙ **Clinic Settings** | Clinic name, logo, doctor, phone, address, email — appears on all documents |
+| 🌙 **Light / Dark Mode** | Switch the whole interface between Light and Dark from Settings; saved permanently and applied instantly (no restart), with full RTL preserved |
+| 🔑 **DEMO / FULL Licensing** | Offline Ed25519 licensing with perpetual **FULL** keys or expiring, patient-capped, watermarked **DEMO** keys; machine-locked with Windows clock-rollback protection |
 | 💾 **Backup** | Automatic daily backup, manual backup, and restore from file |
 
 Everything is stored **locally** in SQLite and works with **no internet

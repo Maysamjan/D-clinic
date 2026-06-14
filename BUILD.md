@@ -74,7 +74,7 @@ It will:
 2. clean old `build/` and `dist/`,
 3. build the app from `D-Clinic.spec`  → **`dist\D-Clinic\D-Clinic.exe`**,
 4. if **Inno Setup 6** is installed, compile the installer
-   → **`installer\Output\D-Clinic-Setup-1.0.0.exe`**.
+   → **`installer\Output\D-Clinic-Setup-1.1.0.exe`**.
 
 (If Inno Setup isn't found it simply skips step 4 and you can still ship the
 portable `dist\D-Clinic\` folder.)
@@ -96,7 +96,7 @@ so it runs on a **clean Windows PC with no Python installed**:
 
 The spec also embeds Windows file metadata via `version_info.txt`
 (Company **Zenith Soft**, Product **D-Clinic**, Description **Dental Clinic
-Management System**, Version **1.0.0**, Copyright **Zenith Soft**) — visible
+Management System**, Version **1.1.0**, Copyright **Zenith Soft**) — visible
 in the .exe's *Properties → Details* tab.
 
 ### Manual build (without the script)
@@ -110,7 +110,7 @@ pyinstaller --noconfirm --clean D-Clinic.spec
 ### The installer
 
 Compiling `installer/D-Clinic.iss` with Inno Setup 6 produces
-**`installer\Output\D-Clinic-Setup-1.0.0.exe`**, which:
+**`installer\Output\D-Clinic-Setup-1.1.0.exe`**, which:
 
 - installs into **Program Files** (`C:\Program Files\D-Clinic`),
 - creates a **Desktop** shortcut (optional checkbox) and a **Start Menu**
@@ -143,7 +143,7 @@ build with no `%PROGRAMDATA%` falls back to the folder next to the `.exe`.)
 The installer targets **Windows 8, 8.1, 10 and 11** (`MinVersion=6.2` in the
 `.iss`). The build was validated on the build host (spec parses, every
 resource is bundled, all imports resolve); **run the produced
-`D-Clinic-Setup-1.0.0.exe` once on each target Windows version** to confirm
+`D-Clinic-Setup-1.1.0.exe` once on each target Windows version** to confirm
 the full install → launch → activation → print flow before commercial
 release.
 

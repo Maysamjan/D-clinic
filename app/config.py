@@ -71,7 +71,7 @@ CURRENCY = "AFN"
 
 # Application metadata
 APP_NAME = "D-Clinic"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 APP_TITLE = "سیستم مدیریت کلینیک دندانپزشکی"  # Dental Clinic Management System
 
 # ---------------------------------------------------------------------------

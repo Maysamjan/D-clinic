@@ -1,3 +1,56 @@
+# D-Clinic — Release Notes
+
+## v1.1.0 — Windows compatibility, Dark Mode & DEMO licensing
+
+**Release date:** 2026-06-14 · No breaking changes; existing installs upgrade
+automatically on first launch.
+
+### 1. Windows compatibility
+- Audited the dependency surface — the only third-party dependency is
+  **PyQt6**; everything else is the Python standard library.
+- Confirmed **no Windows 10/11-only APIs** are used (the single OS call,
+  `winreg` for the Machine ID, exists on all Windows versions and has
+  fallbacks).
+- Pinned PyQt6 to the **Qt 6.5 LTS** line (`>=6.5,<6.6`).
+- Added **`docs/WINDOWS_COMPATIBILITY.md`** with the full report, including the
+  Windows 8/8.1 caveat (Qt 6 targets Windows 10+) and the PyQt5 build path for
+  a guaranteed Windows 8/8.1 deployment.
+
+### 2. Dark Mode (Night Mode)
+- New **Light / Dark** selector in **Settings**, saved permanently and applied
+  **immediately** (no restart).
+- Covers the whole UI — sidebar, header, cards, tables, forms, dialogs, tabs,
+  login/activation, About page and the hand-painted **charts**.
+- **RTL for Dari/Persian preserved** in both themes; brand teal accent kept
+  consistent.
+- Printed documents stay light on purpose (ink-friendly paper output).
+
+### 3. Professional DEMO / FULL license system (offline, Ed25519)
+- **FULL** — perpetual, no patient limit, no watermark.
+- **DEMO** — expiry (7/15/30/custom days), configurable patient cap, and a
+  `DEMO VERSION - ZENITH SOFT` watermark on every printed/PDF page.
+- **About page** shows license type, remaining days, expiry and patient quota.
+- **Patient cap** enforced when registering new patients on a DEMO license.
+- **Security:** signature verified on every startup, machine-locked keys, and
+  **Windows clock-rollback detection** (HMAC-protected, machine-bound run-date
+  record blocks execution if the clock is moved backwards).
+- `tools/keygen.py` extended with `--demo`/`--full`, `--days`/`--expiry`,
+  `--max-patients`.
+- **Backward compatible** — existing v1.0.0 keys keep working as FULL licenses.
+
+### Database
+- Added a `theme` column to `clinics` via an idempotent migration; existing
+  databases upgrade automatically with no data loss.
+
+### Remaining risks
+- **Windows 8 / 8.1** is not guaranteed on the PyQt6 build (Qt 6 targets
+  Windows 10+); use the PyQt5 build path in the compatibility report.
+- Printed documents remain light in Dark Mode by design.
+- Final sign-off needs a **manual run on each target Windows version** using
+  the checklist in `docs/WINDOWS_COMPATIBILITY.md`.
+
+---
+
 # D-Clinic v1.0.0 — Release Notes
 
 **Product:** D-Clinic — Dental Clinic Management System
