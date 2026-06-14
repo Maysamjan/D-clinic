@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+*.spec
+!D-Clinic.spec
+# Inno Setup output
+installer/Output/
+
+# Application runtime data (kept local, never committed)
+/data/
+/backups/
+/attachments/
+*.db
+*.db-wal
+*.db-shm
+
+# Licensing — the vendor private key must NEVER be committed
+/license_private/
+*.lic
+license.dat
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
