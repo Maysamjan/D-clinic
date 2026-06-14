@@ -61,14 +61,36 @@ class Application:
         return self.app.exec()
 
     def _start(self):
-        """Require product-key activation before anything else."""
+        """Require a valid product-key activation before anything else."""
         from app.services import license_service as lic
 
-        if lic.is_activated():
-            self._ensure_registration()
-            self._show_login()
-        else:
+        if not lic.is_activated():
             self._show_activation()
+            return
+
+        st = lic.status()
+        if st["reason"] == "clock_rollback":
+            # The system clock was moved backwards — block until it is fixed.
+            self._block_clock_rollback()
+            return
+        if not st["ok"]:
+            # Signature-valid but expired (DEMO) — let them enter a renewal key.
+            self._show_activation(reason=st["reason"])
+            return
+
+        self._ensure_registration()
+        self._show_login()
+
+    def _block_clock_rollback(self):
+        from PyQt6.QtWidgets import QMessageBox
+        from app.services.i18n import t
+        QMessageBox.critical(
+            None, config.BRAND + " — " + t("خطای ساعت سیستم"),
+            t("تاریخ سیستم به عقب تغییر کرده است.\n\n"
+              "برای جلوگیری از دور زدن محدودیت جواز، اجرای برنامه متوقف شد. "
+              "لطفاً تاریخ و ساعت ویندوز را به زمان درست تنظیم کنید و دوباره "
+              "برنامه را باز کنید."))
+        self.app.quit()
 
     def _ensure_registration(self):
         """Collect clinic details once, after the machine is licensed."""
@@ -78,10 +100,10 @@ class Application:
         from app.ui.activation import RegistrationDialog
         RegistrationDialog().exec()
 
-    def _show_activation(self):
+    def _show_activation(self, reason: str = ""):
         from app.ui.activation import ActivationWindow
 
-        self.activation_window = ActivationWindow()
+        self.activation_window = ActivationWindow(reason=reason)
         self.activation_window.activated.connect(self._on_activated)
         self.activation_window.show()
 

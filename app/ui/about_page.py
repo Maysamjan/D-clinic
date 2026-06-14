@@ -14,6 +14,7 @@ from .. import config
 from ..models import clinic as clinic_model
 from ..services import license_service as lic
 from ..services.i18n import t
+from ..utils import helpers
 
 
 class AboutPage(QScrollArea):
@@ -94,18 +95,52 @@ class AboutPage(QScrollArea):
         grid.setColumnStretch(1, 1)
 
         clinic = clinic_model.get()
-        activated = lic.is_activated()
+        st = lic.status()
+        activated = st["activated"]
         status_text = t("فعال (دارای جواز)") if activated else t("فعال نشده")
         status_color = "#0A8F60" if activated else "#C0344E"
 
-        self._row(grid, 0, t("محصول"), f"{config.APP_NAME} — {config.BRAND}")
-        self._row(grid, 1, t("نسخه برنامه"), config.APP_VERSION)
-        self._row(grid, 2, t("وضعیت جواز"), status_text, status_color)
-        self._row(grid, 3, t("کلینیک دارای جواز"),
-                  clinic.get("name") or "—")
+        r = 0
+        self._row(grid, r, t("محصول"), f"{config.APP_NAME} — {config.BRAND}"); r += 1
+        self._row(grid, r, t("نسخه برنامه"), config.APP_VERSION); r += 1
+        self._row(grid, r, t("وضعیت جواز"), status_text, status_color); r += 1
+
+        # License type + DEMO details (remaining days, patient usage).
+        if activated:
+            if st["is_demo"]:
+                self._row(grid, r, t("نوع جواز"),
+                          t("نسخه آزمایشی (DEMO)"), "#A66617"); r += 1
+                days = st["days_remaining"]
+                if days is not None:
+                    if days < 0:
+                        rem_text, rem_color = t("منقضی شده"), "#C0344E"
+                    else:
+                        rem_text = (helpers.jalali_digits(days) + " "
+                                    + t("روز باقی‌مانده"))
+                        rem_color = "#0A8F60" if days > 5 else "#A66617"
+                    self._row(grid, r, t("اعتبار باقی‌مانده"), rem_text, rem_color)
+                    r += 1
+                if st["expiry_date"] is not None:
+                    self._row(grid, r, t("تاریخ انقضا"),
+                              helpers.jalali_date(st["expiry_date"].isoformat()))
+                    r += 1
+                limit = st["max_patients"] or 0
+                if limit > 0:
+                    usage = (helpers.jalali_digits(st["patient_count"]) + " / "
+                             + helpers.jalali_digits(limit))
+                    used_up = st["patient_count"] >= limit
+                    self._row(grid, r, t("سهمیه مریض"), usage,
+                              "#C0344E" if used_up else "#111B27")
+                    r += 1
+            else:
+                self._row(grid, r, t("نوع جواز"),
+                          t("نسخه کامل (FULL)"), "#0A8F60"); r += 1
+
+        self._row(grid, r, t("کلینیک دارای جواز"),
+                  clinic.get("name") or "—"); r += 1
         if clinic.get("owner_name"):
-            self._row(grid, 4, t("داکتر / مالک"), clinic.get("owner_name"))
-        self._row(grid, 5, t("شناسه دستگاه"), lic.machine_id_display())
+            self._row(grid, r, t("داکتر / مالک"), clinic.get("owner_name")); r += 1
+        self._row(grid, r, t("شناسه دستگاه"), lic.machine_id_display())
         lay.addLayout(grid)
         return card
 

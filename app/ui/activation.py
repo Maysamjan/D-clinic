@@ -23,8 +23,9 @@ class ActivationWindow(QWidget):
 
     activated = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, reason: str = ""):
         super().__init__(parent)
+        self._reason = reason
         self.setWindowTitle(config.BRAND + " — " + t("فعال‌سازی"))
         self.resize(720, 600)
         self._build()
@@ -68,6 +69,18 @@ class ActivationWindow(QWidget):
         lay.addWidget(logo)
         lay.addWidget(title)
         lay.addWidget(hint)
+
+        # Optional expiry / status banner (shown when an existing DEMO key
+        # has expired and the customer needs to enter a renewal key).
+        if self._reason == "expired":
+            banner = QLabel(t("جواز نسخه آزمایشی به پایان رسیده است. برای ادامه، "
+                              "کلید محصول جدید را وارد کنید."))
+            banner.setWordWrap(True)
+            banner.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            banner.setStyleSheet(
+                "background:#FEF2F4; color:#B11334; border:1px solid #F6C9D2;"
+                " border-radius:10px; padding:10px; font-weight:700;")
+            lay.addWidget(banner)
 
         # Machine ID box
         mid_box = QFrame()

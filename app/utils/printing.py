@@ -21,15 +21,16 @@ from __future__ import annotations
 import datetime
 import os
 
-from PyQt6.QtCore import QMarginsF, Qt
+from PyQt6.QtCore import QMarginsF, QRectF, QSizeF, Qt
 from PyQt6.QtGui import (
-    QFont, QImage, QPageLayout, QPageSize, QTextDocument
+    QColor, QFont, QImage, QPageLayout, QPageSize, QPainter, QTextDocument
 )
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
 from .. import config
 from ..models import clinic as clinic_model
+from ..services import license_service as lic
 from ..models import staff as staff_model
 from ..models import odontogram as odontogram_model
 from ..models import (
@@ -548,6 +549,76 @@ def _make_document(html: str) -> QTextDocument:
     return doc
 
 
+def _draw_watermark(painter: QPainter, body: QRectF) -> None:
+    """Stamp the DEMO watermark diagonally across the current printed page."""
+    painter.save()
+    painter.setClipping(False)
+    # Big translucent diagonal watermark through the centre of the page.
+    font = QFont(config.FONT_FAMILY)
+    font.setPixelSize(max(int(body.width() / 16), 24))
+    font.setBold(True)
+    painter.setFont(font)
+    painter.setPen(QColor(150, 150, 150, 90))
+    painter.translate(body.width() / 2.0, body.height() / 2.0)
+    painter.rotate(-35)
+    painter.drawText(
+        QRectF(-body.width(), -body.height() / 6.0,
+               body.width() * 2.0, body.height() / 3.0),
+        Qt.AlignmentFlag.AlignCenter, lic.WATERMARK_TEXT)
+    painter.restore()
+    # Small footer stamp so the mark is unmistakable even on dense pages.
+    painter.save()
+    painter.setClipping(False)
+    foot = QFont(config.FONT_FAMILY)
+    foot.setPixelSize(max(int(body.width() / 55), 9))
+    foot.setBold(True)
+    painter.setFont(foot)
+    painter.setPen(QColor(150, 150, 150, 160))
+    painter.drawText(
+        QRectF(0, body.height() - body.height() / 28.0,
+               body.width(), body.height() / 28.0),
+        Qt.AlignmentFlag.AlignCenter, lic.WATERMARK_TEXT)
+    painter.restore()
+
+
+def _print_document(doc: QTextDocument, printer: QPrinter,
+                    watermark: bool) -> None:
+    """Render *doc* to *printer*.
+
+    For FULL licenses this is a straight ``doc.print``. For DEMO licenses the
+    document is painted page-by-page so a watermark can be overlaid on every
+    page.
+    """
+    if not watermark:
+        doc.print(printer)
+        return
+
+    painter = QPainter()
+    if not painter.begin(printer):
+        doc.print(printer)  # fall back rather than fail printing entirely
+        return
+    try:
+        # Lay the document out at the printer's resolution so point sizes map
+        # to the right number of device pixels (otherwise the text prints tiny).
+        doc.documentLayout().setPaintDevice(printer)
+        page_rect = printer.pageRect(QPrinter.Unit.DevicePixel)
+        body = QRectF(0, 0, page_rect.width(), page_rect.height())
+        doc.setPageSize(QSizeF(body.width(), body.height()))
+        page_count = max(doc.pageCount(), 1)
+        for i in range(page_count):
+            if i > 0:
+                printer.newPage()
+            painter.save()
+            painter.translate(0, -i * body.height())
+            clip = QRectF(0, i * body.height(), body.width(), body.height())
+            painter.setClipRect(clip)
+            doc.drawContents(painter, clip)
+            painter.restore()
+            _draw_watermark(painter, body)
+    finally:
+        painter.end()
+
+
 def print_html(html: str, parent=None, title: str = "چاپ") -> bool:
     printer = QPrinter(QPrinter.PrinterMode.HighResolution)
     printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
@@ -555,7 +626,7 @@ def print_html(html: str, parent=None, title: str = "چاپ") -> bool:
     dialog = QPrintDialog(printer, parent)
     dialog.setWindowTitle(title)
     if dialog.exec() == QPrintDialog.DialogCode.Accepted:
-        _make_document(html).print(printer)
+        _print_document(_make_document(html), printer, lic.is_demo())
         return True
     return False
 
@@ -573,7 +644,7 @@ def export_pdf(html: str, parent=None, suggested_name: str = "document.pdf") -> 
     printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
     printer.setPageMargins(QMarginsF(14, 14, 14, 14), QPageLayout.Unit.Millimeter)
     printer.setOutputFileName(path)
-    _make_document(html).print(printer)
+    _print_document(_make_document(html), printer, lic.is_demo())
     return path
 
 
