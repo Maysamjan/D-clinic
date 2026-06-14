@@ -46,6 +46,7 @@ _EN: dict[str, str] = {
     # App / branding
     "سیستم مدیریت کلینیک دندانپزشکی": "Dental Clinic Management System",
     "مدیریت کلینیک دندانپزشکی": "Dental Clinic Management",
+    "راهکار هوشمند مدیریت کلینیک دندانپزشکی": "Smart Dental Clinic Management Solution",
     "نرم‌افزار مدیریت کلینیک دندانپزشکی — افغانستان":
         "Dental Clinic Management Software — Afghanistan",
 

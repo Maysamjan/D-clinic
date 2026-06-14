@@ -44,7 +44,15 @@ class ActivationWindow(QWidget):
         lay.setContentsMargins(34, 30, 34, 30)
         lay.setSpacing(14)
 
-        logo = QLabel("🦷  " + config.BRAND)
+        logo_img = QLabel()
+        logo_img.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        if os.path.isfile(config.LOGO_FILE):
+            from PyQt6.QtGui import QPixmap
+            logo_img.setPixmap(QPixmap(config.LOGO_FILE).scaled(
+                72, 72, Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation))
+            lay.addWidget(logo_img)
+        logo = QLabel(config.BRAND)
         logo.setObjectName("LoginTitle")
         logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title = QLabel(t("فعال‌سازی نرم‌افزار"))

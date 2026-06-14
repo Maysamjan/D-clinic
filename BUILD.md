@@ -52,10 +52,22 @@ Or simply launch the app, open **Settings → Restore**, and choose
 
 ## 3. Build a standalone Windows .exe (PyInstaller)
 
+### Easiest — use the build script
+
+On Windows just double-click / run **`build.bat`**, which performs all the
+steps below and produces `dist/D-Clinic/D-Clinic.exe`:
+
+```bat
+build.bat
+```
+
+### Manual command
+
 ```bash
 pip install pyinstaller
 
 pyinstaller --noconfirm --windowed --name D-Clinic ^
+    --icon assets/icon.ico ^
     --add-data "app/resources/styles.qss;app/resources" ^
     --add-data "assets;assets" ^
     main.py
@@ -65,23 +77,30 @@ pyinstaller --noconfirm --windowed --name D-Clinic ^
 > use `\` line continuation instead of `^`:
 > ```bash
 > pyinstaller --noconfirm --windowed --name D-Clinic \
+>     --icon assets/icon.ico \
 >     --add-data "app/resources/styles.qss:app/resources" \
 >     --add-data "assets:assets" \
 >     main.py
 > ```
 
-> The bundled **Vazirmatn** font lives in `assets/fonts` — the
-> `--add-data "assets;assets"` flag ships it inside the executable so the
-> UI and printed documents look identical on every machine.
+> The bundled **Vazirmatn** font lives in `assets/fonts` and the **ZS**
+> brand logo / app icon live in `assets/` — the `--add-data "assets;assets"`
+> flag ships them inside the executable so the UI, login branding and
+> printed documents look identical on every machine. The
+> `--icon assets/icon.ico` flag sets the Windows taskbar / desktop icon.
 
 Results:
 - One-folder build: `dist/D-Clinic/D-Clinic.exe` (portable folder)
 - For a single-file build add `--onefile` (slower startup).
 
-Optional: add an application icon with `--icon assets/app.ico`.
-
 The produced executable is fully **offline** and stores its data
 (`data/`, `backups/`, `attachments/`) next to the `.exe`.
+
+> **Before building — set your company details.** Open `app/config.py` and
+> edit `BRAND`, `BRAND_SLOGAN`, `BRAND_PHONE` and `BRAND_EMAIL` (the phone
+> and email shown on the login screen are placeholders). To regenerate the
+> logo/icon after changing the brand letters, run
+> `python tools/make_logo.py`.
 
 ---
 

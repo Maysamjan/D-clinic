@@ -10,7 +10,7 @@ from __future__ import annotations
 import sys
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtWidgets import QApplication
 
 from app import config
@@ -36,6 +36,9 @@ class Application:
 
         self.app = QApplication(sys.argv)
         self.app.setApplicationName(config.APP_NAME)
+        import os as _os
+        if _os.path.isfile(config.ICON_FILE):
+            self.app.setWindowIcon(QIcon(config.ICON_FILE))
         self._apply_direction()
         family = helpers.load_fonts()
         font = QFont(family, 11)

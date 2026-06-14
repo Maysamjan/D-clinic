@@ -46,6 +46,8 @@ LOGO_DIR = os.path.join(DATA_DIR, "logos")
 RESOURCE_DIR = _resource_dir()
 ASSETS_DIR = os.path.join(RESOURCE_DIR, "assets")
 FONTS_DIR = os.path.join(ASSETS_DIR, "fonts")
+LOGO_FILE = os.path.join(ASSETS_DIR, "logo.png")     # brand logo (ZS badge)
+ICON_FILE = os.path.join(ASSETS_DIR, "icon.png")     # window/app icon
 
 # Primary UI font family (bundled, see assets/fonts).
 FONT_FAMILY = "Vazirmatn"
@@ -58,9 +60,16 @@ CURRENCY = "AFN"
 
 # Application metadata
 APP_NAME = "D-Clinic"
-# Company / brand name shown on the login, sidebar and activation screens.
-BRAND = "Zenth Soft"
 APP_TITLE = "سیستم مدیریت کلینیک دندانپزشکی"  # Dental Clinic Management System
+
+# ---------------------------------------------------------------------------
+# Vendor / company branding shown on the login, sidebar and activation screens.
+# ⬇️  EDIT THESE THREE LINES with your real company details before building.
+# ---------------------------------------------------------------------------
+BRAND = "Zenith Soft"
+BRAND_SLOGAN = "راهکار هوشمند مدیریت کلینیک دندانپزشکی"
+BRAND_PHONE = "+93 700 000 000"
+BRAND_EMAIL = "info@zenithsoft.com"
 
 
 def ensure_dirs() -> None:

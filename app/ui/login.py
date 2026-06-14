@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import os
+
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QPixmap
 from PyQt6.QtWidgets import (
     QFrame, QGraphicsDropShadowEffect, QHBoxLayout, QLabel, QLineEdit,
     QMessageBox, QPushButton, QVBoxLayout, QWidget
@@ -39,23 +41,38 @@ class LoginWindow(QWidget):
         )
         bl = QVBoxLayout(brand)
         bl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        bl.setSpacing(10)
-        logo = QLabel("🦷")
-        logo.setStyleSheet("font-size: 96px;")
+        bl.setSpacing(8)
+
+        logo = QLabel()
         logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        if os.path.isfile(config.LOGO_FILE):
+            pix = QPixmap(config.LOGO_FILE).scaled(
+                150, 150, Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation)
+            logo.setPixmap(pix)
+        else:
+            logo.setText("ZS")
+            logo.setStyleSheet("color:#fff; font-size:72px; font-weight:bold;")
+
         name = QLabel(config.BRAND)
-        name.setStyleSheet("color:#ffffff; font-size:40px; font-weight:bold;")
+        name.setStyleSheet("color:#ffffff; font-size:38px; font-weight:bold;")
         name.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        sub = QLabel(config.APP_TITLE)
-        sub.setStyleSheet("color:#CFEFEA; font-size:16px;")
-        sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        tag = QLabel(t("نرم‌افزار مدیریت کلینیک دندانپزشکی — افغانستان"))
-        tag.setStyleSheet("color:#9FD8D1; font-size:13px; margin-top:20px;")
-        tag.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        slogan = QLabel(t(config.BRAND_SLOGAN))
+        slogan.setStyleSheet("color:#CFEFEA; font-size:15px;")
+        slogan.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        slogan.setWordWrap(True)
+
+        contact = QLabel(f"📞 {config.BRAND_PHONE}    ✉ {config.BRAND_EMAIL}")
+        contact.setStyleSheet("color:#9FD8D1; font-size:13px; margin-top:14px;")
+        contact.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        contact.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse)
+
         bl.addWidget(logo)
         bl.addWidget(name)
-        bl.addWidget(sub)
-        bl.addWidget(tag)
+        bl.addWidget(slogan)
+        bl.addWidget(contact)
 
         # Right login form
         right = QFrame()

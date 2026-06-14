@@ -71,11 +71,22 @@ class MainWindow(QMainWindow):
         lay.setContentsMargins(16, 22, 16, 20)
         lay.setSpacing(7)
 
-        brand = QLabel("🦷  " + config.BRAND)
+        brand_row = QHBoxLayout()
+        brand_row.setSpacing(8)
+        import os as _os
+        logo_lbl = QLabel()
+        if _os.path.isfile(config.LOGO_FILE):
+            from PyQt6.QtGui import QPixmap
+            logo_lbl.setPixmap(QPixmap(config.LOGO_FILE).scaled(
+                34, 34, Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation))
+        brand = QLabel(config.BRAND)
         brand.setObjectName("BrandTitle")
+        brand_row.addWidget(logo_lbl)
+        brand_row.addWidget(brand, 1)
         sub = QLabel(t("مدیریت کلینیک دندانپزشکی"))
         sub.setObjectName("BrandSub")
-        lay.addWidget(brand)
+        lay.addLayout(brand_row)
         lay.addWidget(sub)
         lay.addSpacing(14)
         sep = QFrame()
