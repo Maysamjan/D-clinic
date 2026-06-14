@@ -19,8 +19,10 @@ _FA_TO_EN = str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789")
 
 
 class JalaliDateEdit(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, default_today: bool = True,
+                 clearable: bool = False):
         super().__init__(parent)
+        self._default_today = default_today
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(6)
@@ -33,15 +35,28 @@ class JalaliDateEdit(QWidget):
         today_btn.clicked.connect(self.set_today)
         layout.addWidget(self.edit, 1)
         layout.addWidget(today_btn)
-        self.set_today()
+        if clearable:
+            clear_btn = QPushButton("✕")
+            clear_btn.setObjectName("Secondary")
+            clear_btn.setFixedWidth(34)
+            clear_btn.clicked.connect(self.clear)
+            layout.addWidget(clear_btn)
+        if default_today:
+            self.set_today()
 
     def set_today(self):
         jy, jm, jd = jalali.today_jalali()
         self.edit.setText(jalali.to_persian_digits(f"{jy:04d}/{jm:02d}/{jd:02d}"))
 
+    def clear(self):
+        self.edit.clear()
+
     def set_iso(self, iso: str):
         if not iso:
-            self.set_today()
+            if self._default_today:
+                self.set_today()
+            else:
+                self.edit.clear()
             return
         self.edit.setText(jalali.date_to_jalali_str(iso))
 

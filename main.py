@@ -65,9 +65,18 @@ class Application:
         from app.services import license_service as lic
 
         if lic.is_activated():
+            self._ensure_registration()
             self._show_login()
         else:
             self._show_activation()
+
+    def _ensure_registration(self):
+        """Collect clinic details once, after the machine is licensed."""
+        from app.models import clinic as clinic_model
+        if clinic_model.is_registered():
+            return
+        from app.ui.activation import RegistrationDialog
+        RegistrationDialog().exec()
 
     def _show_activation(self):
         from app.ui.activation import ActivationWindow
@@ -80,6 +89,7 @@ class Application:
         if self.activation_window is not None:
             self.activation_window.close()
             self.activation_window = None
+        self._ensure_registration()
         self._show_login()
 
     def _show_login(self):

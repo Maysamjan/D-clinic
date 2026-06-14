@@ -15,12 +15,26 @@ def get() -> dict:
 
 
 def update(name: str, owner_name: str, phone: str, address: str,
-           email: str, logo_path: str) -> None:
+           email: str, logo_path: str, city: str = "") -> None:
     db.execute(
         """UPDATE clinics SET name = ?, owner_name = ?, phone = ?,
-           address = ?, email = ?, logo_path = ? WHERE id = 1""",
-        (name, owner_name, phone, address, email, logo_path),
+           address = ?, email = ?, logo_path = ?, city = ? WHERE id = 1""",
+        (name, owner_name, phone, address, email, logo_path, city),
     )
+
+
+def register(name: str, owner_name: str, phone: str, city: str) -> None:
+    """Store the one-time customer registration captured after activation."""
+    db.execute(
+        """UPDATE clinics SET name = ?, owner_name = ?, phone = ?, city = ?,
+           registered = 1 WHERE id = 1""",
+        (name, owner_name, phone, city),
+    )
+
+
+def is_registered() -> bool:
+    row = db.query_one("SELECT registered FROM clinics WHERE id = 1")
+    return bool(row and row["registered"])
 
 
 def get_language() -> str:

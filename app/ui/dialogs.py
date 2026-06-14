@@ -183,12 +183,16 @@ class VisitDialog(QDialog):
         self.notes = QPlainTextEdit()
         self.notes.setFixedHeight(70)
 
+        # Optional follow-up / recall date (empty by default).
+        self.next_visit = JalaliDateEdit(default_today=False, clearable=True)
+
         form.addRow(t("تاریخ ویزیت *"), self.date)
         form.addRow(t("نوع معالجه"), self.treatment)
         form.addRow(t("شماره دندان"), self.tooth)
         form.addRow(t("داکتر"), self.doctor)
         form.addRow(t("هزینه"), self.cost)
         form.addRow(t("یادداشت"), self.notes)
+        form.addRow(t("مراجعه بعدی (اختیاری)"), self.next_visit)
         layout.addLayout(form)
 
         # Attachments section
@@ -272,6 +276,8 @@ class VisitDialog(QDialog):
             self.doctor.setCurrentIndex(self.doctor.count() - 1)
         self.cost.setValue(float(v.get("cost", 0)))
         self.notes.setPlainText(v.get("notes", ""))
+        if v.get("next_visit_date"):
+            self.next_visit.set_iso(v.get("next_visit_date"))
         for a in attachment_model.for_visit(v["id"]):
             item = QListWidgetItem("📎 " + (a.get("original_name") or ""))
             item.setData(Qt.ItemDataRole.UserRole, ("saved", a["id"]))
@@ -289,11 +295,13 @@ class VisitDialog(QDialog):
         staff_id = self.doctor.currentData()
         doctor_name = self.doctor.currentText() if self.doctor.currentIndex() > 0 else ""
 
+        next_iso = self.next_visit.iso_date()
         if self.visit:
             visit_model.update(
                 self.visit["id"], self.treatment.currentData(), tname,
                 None, doctor_name, iso, self.cost.value(),
                 self.notes.toPlainText(), self.tooth.text(), staff_id=staff_id,
+                next_visit_date=next_iso,
             )
             vid = self.visit["id"]
         else:
@@ -301,6 +309,7 @@ class VisitDialog(QDialog):
                 self.patient_id, self.treatment.currentData(), tname,
                 None, doctor_name, iso, self.cost.value(),
                 self.notes.toPlainText(), self.tooth.text(), staff_id=staff_id,
+                next_visit_date=next_iso,
             )
         # Save pending attachments
         for f in self._pending_files:
@@ -365,4 +374,98 @@ class PaymentDialog(QDialog):
             self.patient_id, self.amount.value(), self.method.currentData(),
             iso, self.notes.text(), created_by=uid,
         )
+        self.accept()
+
+
+# ---------------------------------------------------------------------------
+# Treatment plan dialog
+# ---------------------------------------------------------------------------
+
+class TreatmentPlanDialog(QDialog):
+    def __init__(self, parent=None, patient_id: int = 0, plan: dict | None = None):
+        super().__init__(parent)
+        from ..models import treatment_plan as plan_model
+        self._plan_model = plan_model
+        self.patient_id = patient_id
+        self.plan = plan
+        self.setWindowTitle(t("ویرایش پلان معالجه") if plan
+                            else t("افزودن به پلان معالجه"))
+        self.setMinimumWidth(440)
+        layout = setup_form_dialog(
+            self, t("ویرایش پلان معالجه") if plan else t("پلان معالجه"),
+            "معالجه‌ی برنامه‌ریزی‌شده برای آینده", "📝")
+        form = QFormLayout()
+        form.setSpacing(12)
+        form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+
+        self.treatment = QComboBox()
+        self.treatment.setEditable(True)
+        for tr in treatment_model.all_active():
+            self.treatment.addItem(tr["name"], tr["id"])
+        self.treatment.setCurrentText("")
+        self.treatment.currentIndexChanged.connect(self._on_treatment_changed)
+
+        self.tooth = QLineEdit()
+        self.tooth.setPlaceholderText(t("مثلاً ۲۶"))
+        self.est_cost = QDoubleSpinBox()
+        self.est_cost.setRange(0, 100_000_000)
+        self.est_cost.setSingleStep(100)
+        self.est_cost.setSuffix(" افغانی")
+        self.est_cost.setGroupSeparatorShown(True)
+        self.status = QComboBox()
+        for key, label in self._plan_model.STATUSES.items():
+            self.status.addItem(t(label), key)
+        self.notes = QPlainTextEdit()
+        self.notes.setFixedHeight(60)
+
+        form.addRow(t("معالجه *"), self.treatment)
+        form.addRow(t("شماره دندان"), self.tooth)
+        form.addRow(t("هزینه تخمینی"), self.est_cost)
+        form.addRow(t("وضعیت"), self.status)
+        form.addRow(t("یادداشت"), self.notes)
+        layout.addLayout(form)
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Save
+            | QDialogButtonBox.StandardButton.Cancel)
+        buttons.button(QDialogButtonBox.StandardButton.Save).setText(t("ذخیره"))
+        buttons.button(QDialogButtonBox.StandardButton.Cancel).setText(t("لغو"))
+        buttons.accepted.connect(self._save)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+        if plan:
+            self._load(plan)
+
+    def _on_treatment_changed(self):
+        tid = self.treatment.currentData()
+        if tid:
+            tr = treatment_model.get(tid)
+            if tr and self.est_cost.value() == 0:
+                self.est_cost.setValue(float(tr["default_price"]))
+
+    def _load(self, plan: dict):
+        self.treatment.setCurrentText(plan.get("treatment", ""))
+        self.tooth.setText(plan.get("tooth", "") or "")
+        self.est_cost.setValue(float(plan.get("est_cost", 0)))
+        si = self.status.findData(plan.get("status", "planned"))
+        if si >= 0:
+            self.status.setCurrentIndex(si)
+        self.notes.setPlainText(plan.get("notes", "") or "")
+
+    def _save(self):
+        treatment = self.treatment.currentText().strip()
+        if not treatment:
+            QMessageBox.warning(self, t("خطا"), t("نام معالجه الزامی است."))
+            return
+        if self.plan:
+            self._plan_model.update(
+                self.plan["id"], treatment, self.tooth.text().strip(),
+                self.est_cost.value(), self.status.currentData(),
+                self.notes.toPlainText())
+        else:
+            self._plan_model.create(
+                self.patient_id, treatment, self.tooth.text().strip(),
+                self.est_cost.value(), self.status.currentData(),
+                self.notes.toPlainText())
         self.accept()

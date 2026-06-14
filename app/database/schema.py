@@ -261,6 +261,22 @@ CREATE TABLE IF NOT EXISTS prescription_items (
     FOREIGN KEY (prescription_id) REFERENCES prescriptions(id) ON DELETE CASCADE
 );
 
+-- Treatment plans (planned future treatments per patient) ----------------
+CREATE TABLE IF NOT EXISTS treatment_plans (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    patient_id    INTEGER NOT NULL,
+    tooth         TEXT DEFAULT '',
+    treatment     TEXT NOT NULL,
+    est_cost      REAL NOT NULL DEFAULT 0,
+    status        TEXT DEFAULT 'planned',   -- planned | done | cancelled
+    priority      INTEGER NOT NULL DEFAULT 0,
+    notes         TEXT DEFAULT '',
+    created_at    TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_tplan_patient ON treatment_plans(patient_id);
+CREATE INDEX IF NOT EXISTS idx_tplan_status ON treatment_plans(status);
+
 -- Clinic expenses --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS expenses (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -358,10 +374,19 @@ def _migrate() -> None:
         if col not in pcols:
             db.execute(f"ALTER TABLE patients ADD COLUMN {col} TEXT DEFAULT ''")
 
-    # Clinic UI language.
+    # Clinic UI language + city (collected at registration) + activation flag.
     ccols = {r["name"] for r in db.query_all("PRAGMA table_info(clinics)")}
     if "language" not in ccols:
         db.execute("ALTER TABLE clinics ADD COLUMN language TEXT DEFAULT 'fa'")
+    if "city" not in ccols:
+        db.execute("ALTER TABLE clinics ADD COLUMN city TEXT DEFAULT ''")
+    if "registered" not in ccols:
+        db.execute("ALTER TABLE clinics ADD COLUMN registered INTEGER DEFAULT 0")
+
+    # Visit follow-up / recall date.
+    vcols = {r["name"] for r in db.query_all("PRAGMA table_info(visits)")}
+    if "next_visit_date" not in vcols:
+        db.execute("ALTER TABLE visits ADD COLUMN next_visit_date TEXT")
 
     # Prescription dispense quantity.
     if db.query_one("SELECT name FROM sqlite_master "

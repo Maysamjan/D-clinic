@@ -12,6 +12,7 @@ from .. import config
 from ..models import clinic as clinic_model
 from ..services import session
 from ..services.i18n import is_rtl, t
+from .about_page import AboutPage
 from .appointments_page import AppointmentsPage
 from .dashboard import DashboardPage
 from .expenses_page import ExpensesPage
@@ -125,9 +126,10 @@ class MainWindow(QMainWindow):
             ("services", "💲", "خدمات و قیمت‌ها", "services"),
             ("users", "🔑", "کاربران", "users"),
             ("settings", "⚙", "تنظیمات", "settings"),
+            ("about", "ℹ", "درباره برنامه", None),
         ]
         for key, icon, label, cap in nav_items:
-            if not session.can(cap):
+            if cap is not None and not session.can(cap):
                 continue
             btn = QPushButton(f"{icon}  {t(label)}")
             btn.setObjectName("NavButton")
@@ -183,6 +185,7 @@ class MainWindow(QMainWindow):
         self.pages: dict[str, QWidget] = {}
 
         self.dashboard = DashboardPage()
+        self.dashboard.open_patient.connect(self._open_patient)
         self._add_page("dashboard", self.dashboard)
 
         if session.can("appointments"):
@@ -227,6 +230,9 @@ class MainWindow(QMainWindow):
                 self.settings.language_changed.connect(self._on_relaunch)
             self._add_page("settings", self.settings)
 
+        self.about = AboutPage()
+        self._add_page("about", self.about)
+
     def _add_page(self, key: str, widget: QWidget):
         self.pages[key] = widget
         self.stack.addWidget(widget)
@@ -244,6 +250,7 @@ class MainWindow(QMainWindow):
         "services": "خدمات و قیمت‌ها",
         "users": "مدیریت کاربران",
         "settings": "تنظیمات",
+        "about": "درباره برنامه",
     }
 
     def _go(self, key: str):

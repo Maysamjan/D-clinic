@@ -38,10 +38,10 @@ def _text_color(bg: str) -> str:
 # ---------------------------------------------------------------------------
 
 class _ToothDialog(QDialog):
-    def __init__(self, parent, tooth, current):
+    def __init__(self, parent, tooth, current, history=None):
         super().__init__(parent)
         self.setWindowTitle(t("دندان") + " " + tooth)
-        self.setMinimumWidth(360)
+        self.setMinimumWidth(380)
         layout = setup_form_dialog(
             self, t("وضعیت دندان") + " " + digits(tooth),
             "ثبت وضعیت / معالجه‌ی دندان", "🦷")
@@ -58,6 +58,28 @@ class _ToothDialog(QDialog):
         form.addRow(t("وضعیت"), self.condition)
         form.addRow(t("یادداشت"), self.note)
         layout.addLayout(form)
+
+        # Per-tooth treatment history
+        hist_title = QLabel(t("سوابق معالجه این دندان"))
+        hist_title.setStyleSheet("font-weight:bold; color:#0A6B61; margin-top:6px;")
+        layout.addWidget(hist_title)
+        if history:
+            from ...utils import helpers
+            box = QVBoxLayout()
+            for v in history[:8]:
+                row = QLabel("• " + helpers.jalali_date(v.get("visit_date"))
+                             + " — " + (v.get("treatment_name") or t("ویزیت"))
+                             + (("  (" + (v.get("doctor_name") or "") + ")")
+                                if v.get("doctor_name") else ""))
+                row.setStyleSheet("color:#334155; font-size:12px;")
+                row.setWordWrap(True)
+                box.addWidget(row)
+            layout.addLayout(box)
+        else:
+            empty = QLabel(t("هنوز معالجه‌ای برای این دندان ثبت نشده است."))
+            empty.setStyleSheet("color:#94A3B8; font-size:12px;")
+            layout.addWidget(empty)
+
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save
             | QDialogButtonBox.StandardButton.Cancel)
@@ -245,7 +267,9 @@ class OdontogramWidget(QWidget):
             return
         chart = odo.get_chart(self.patient_id)
         current = chart.get(tooth, {"condition": "healthy", "note": ""})
-        dlg = _ToothDialog(self, tooth, current)
+        from ...models import visit as visit_model
+        history = visit_model.for_tooth(self.patient_id, tooth)
+        dlg = _ToothDialog(self, tooth, current, history=history)
         if dlg.exec():
             odo.set_tooth(self.patient_id, tooth,
                           dlg.condition.currentData(), dlg.note.text())

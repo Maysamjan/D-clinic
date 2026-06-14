@@ -522,4 +522,72 @@ _EN: dict[str, str] = {
     "کلینیک دندانپزشکی": "Dental Clinic",
     "داکتر: ": "Doctor: ",
     "تلفن: ": "Phone: ",
+
+    # --- v1.0 release: treatment plan, recall, about, registration -------
+    "نسخه برنامه": "Version",
+    "شهر": "City",
+    "ویزیت": "Visit",
+    "جزئیات": "Details",
+    "مراجعه بعدی (اختیاری)": "Next visit (optional)",
+    # Treatment plan
+    "پلان معالجه": "Treatment plan",
+    "ویرایش پلان معالجه": "Edit treatment plan",
+    "افزودن به پلان معالجه": "Add to treatment plan",
+    "معالجه‌ی برنامه‌ریزی‌شده برای آینده": "A treatment planned for the future",
+    "معالجه *": "Treatment *",
+    "هزینه تخمینی": "Estimated cost",
+    "نام معالجه الزامی است.": "Treatment name is required.",
+    "برنامه‌ریزی‌شده": "Planned",
+    "انجام‌شده": "Done",
+    "لغوشده": "Cancelled",
+    "➕ افزودن به پلان": "➕ Add to plan",
+    "🖨 چاپ پلان": "🖨 Print plan",
+    "📝 پلان معالجه": "📝 Treatment plan",
+    "باقیمانده پلان: ": "Plan remaining: ",
+    " مورد": " items",
+    "انجام شد": "Done",
+    "علامت‌گذاری به‌عنوان انجام‌شده": "Mark as done",
+    "ویرایش پلان": "Edit plan item",
+    "حذف پلان": "Delete plan item",
+    "این مورد از پلان حذف شود؟": "Delete this plan item?",
+    "موارد پلان معالجه": "Treatment Plan Items",
+    "مجموع تخمینی موارد باقیمانده: ": "Estimated total of outstanding items: ",
+    # Recall / follow-up
+    "مراجعه بعدی گذشته است: ": "Follow-up overdue: ",
+    "مراجعه بعدی: امروز": "Next visit: today",
+    "مراجعه بعدی: ": "Next visit: ",
+    "معالجات باقیمانده در پلان: ": "Outstanding treatments in plan: ",
+    "مراجعه‌ بعدی (یادآوری)": "Recalls due",
+    "معالجات ناتمام": "Unfinished treatments",
+    "📅 مریض‌های نیازمند مراجعه بعدی": "📅 Patients due for follow-up",
+    "📝 مریض‌های با معالجه‌ی ناتمام": "📝 Patients with unfinished treatment",
+    "موردی وجود ندارد.": "Nothing to show.",
+    # Per-tooth history
+    "سوابق معالجه این دندان": "Treatment history for this tooth",
+    "هنوز معالجه‌ای برای این دندان ثبت نشده است.":
+        "No treatment recorded for this tooth yet.",
+    # About page
+    "درباره برنامه": "About",
+    "اطلاعات نرم‌افزار و جواز": "Software & License Information",
+    "محصول": "Product",
+    "وضعیت جواز": "License status",
+    "فعال (دارای جواز)": "Activated (licensed)",
+    "فعال نشده": "Not activated",
+    "کلینیک دارای جواز": "Licensed clinic",
+    "داکتر / مالک": "Doctor / Owner",
+    "شناسه دستگاه": "Machine ID",
+    "پشتیبانی": "Support",
+    "برای دریافت پشتیبانی، تمدید جواز یا گزارش مشکل با ما در تماس شوید.":
+        "Contact us for support, license renewal, or to report an issue.",
+    # Registration
+    "ثبت اطلاعات کلینیک": "Clinic Registration",
+    "لطفاً مشخصات کلینیک خود را وارد کنید. این اطلاعات "
+    "روی اسناد و در تنظیمات نمایش داده می‌شود.":
+        "Please enter your clinic details. This information appears on "
+        "documents and in settings.",
+    "نام داکتر *": "Doctor name *",
+    "شماره تلفن *": "Phone number *",
+    "ثبت و ادامه": "Save & continue",
+    "نام کلینیک، نام داکتر و شماره تلفن الزامی است.":
+        "Clinic name, doctor name and phone number are required.",
 }

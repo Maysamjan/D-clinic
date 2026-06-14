@@ -105,11 +105,13 @@ class SettingsPage(QWidget):
         self.name = QLineEdit()
         self.owner = QLineEdit()
         self.phone = QLineEdit()
+        self.city = QLineEdit()
         self.address = QLineEdit()
         self.email = QLineEdit()
         form.addRow(t("نام کلینیک *"), self.name)
         form.addRow(t("نام داکتر / مالک"), self.owner)
         form.addRow(t("شماره تلفن"), self.phone)
+        form.addRow(t("شهر"), self.city)
         form.addRow(t("آدرس"), self.address)
         form.addRow(t("ایمیل (اختیاری)"), self.email)
         lay.addLayout(form)
@@ -258,6 +260,7 @@ class SettingsPage(QWidget):
             self.name.text().strip(), self.owner.text().strip(),
             self.phone.text().strip(), self.address.text().strip(),
             self.email.text().strip(), self._logo_path,
+            city=self.city.text().strip(),
         )
         new_lang = self.language.currentData()
         lang_changed = new_lang != i18n.get_language()
@@ -336,6 +339,7 @@ class SettingsPage(QWidget):
         self.name.setText(c.get("name", ""))
         self.owner.setText(c.get("owner_name", ""))
         self.phone.setText(c.get("phone", ""))
+        self.city.setText(c.get("city", "") or "")
         self.address.setText(c.get("address", ""))
         self.email.setText(c.get("email", ""))
         self._logo_path = c.get("logo_path", "") or ""

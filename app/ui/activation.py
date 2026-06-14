@@ -7,11 +7,13 @@ import os
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QGuiApplication
 from PyQt6.QtWidgets import (
-    QFileDialog, QFrame, QGraphicsDropShadowEffect, QHBoxLayout, QLabel,
-    QMessageBox, QPlainTextEdit, QPushButton, QVBoxLayout, QWidget
+    QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QFrame,
+    QGraphicsDropShadowEffect, QHBoxLayout, QLabel, QLineEdit, QMessageBox,
+    QPlainTextEdit, QPushButton, QVBoxLayout, QWidget
 )
 
 from .. import config
+from ..models import clinic as clinic_model
 from ..services import license_service as lic
 from ..services.i18n import t
 
@@ -135,3 +137,63 @@ class ActivationWindow(QWidget):
                 self, t("کلید نامعتبر"),
                 t("کلید محصول برای این کمپیوتر معتبر نیست.\n"
                   "لطفاً شناسه دستگاه را دوباره برای فروشنده بفرستید."))
+
+
+class RegistrationDialog(QDialog):
+    """Collect the customer's clinic details once, right after activation."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(config.BRAND + " — " + t("ثبت اطلاعات کلینیک"))
+        self.setMinimumWidth(440)
+        self.setModal(True)
+        root = QVBoxLayout(self)
+        root.setContentsMargins(28, 24, 28, 24)
+        root.setSpacing(14)
+
+        title = QLabel(t("ثبت اطلاعات کلینیک"))
+        title.setStyleSheet("font-size:18px; font-weight:700; color:#0E9F8E;")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        root.addWidget(title)
+        hint = QLabel(t("لطفاً مشخصات کلینیک خود را وارد کنید. این اطلاعات "
+                        "روی اسناد و در تنظیمات نمایش داده می‌شود."))
+        hint.setObjectName("LoginSub")
+        hint.setWordWrap(True)
+        hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        root.addWidget(hint)
+
+        form = QFormLayout()
+        form.setSpacing(12)
+        form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        self.clinic_name = QLineEdit()
+        self.doctor_name = QLineEdit()
+        self.phone = QLineEdit()
+        self.city = QLineEdit()
+        # Pre-fill with any existing values.
+        c = clinic_model.get()
+        self.clinic_name.setText(c.get("name", "") or "")
+        self.doctor_name.setText(c.get("owner_name", "") or "")
+        self.phone.setText(c.get("phone", "") or "")
+        self.city.setText(c.get("city", "") or "")
+        form.addRow(t("نام کلینیک *"), self.clinic_name)
+        form.addRow(t("نام داکتر *"), self.doctor_name)
+        form.addRow(t("شماره تلفن *"), self.phone)
+        form.addRow(t("شهر"), self.city)
+        root.addLayout(form)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Save)
+        buttons.button(QDialogButtonBox.StandardButton.Save).setText(t("ثبت و ادامه"))
+        buttons.accepted.connect(self._save)
+        root.addWidget(buttons)
+
+    def _save(self):
+        name = self.clinic_name.text().strip()
+        doctor = self.doctor_name.text().strip()
+        phone = self.phone.text().strip()
+        if not name or not doctor or not phone:
+            QMessageBox.warning(
+                self, t("خطا"),
+                t("نام کلینیک، نام داکتر و شماره تلفن الزامی است."))
+            return
+        clinic_model.register(name, doctor, phone, self.city.text().strip())
+        self.accept()

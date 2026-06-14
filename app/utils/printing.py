@@ -38,6 +38,7 @@ from ..models import (
     invoice as invoice_model,
     patient as patient_model,
     prescription as prescription_model,
+    treatment_plan as plan_model,
     visit as visit_model,
 )
 from ..database import db
@@ -286,8 +287,70 @@ def patient_file_html(patient_id: int) -> str:
             [t("دندان"), t("وضعیت"), t("یادداشت")], crows,
             widths=[80, 150, None]) + "<div style='height:12pt;'></div>")
 
+    # Treatment plan — show outstanding (planned) items
+    plan_html = ""
+    prows = []
+    for pl in plan_model.for_patient(patient_id):
+        if pl.get("status") != "planned":
+            continue
+        prows.append([
+            helpers.jalali_digits(pl.get("tooth")) if pl.get("tooth") else "—",
+            pl.get("treatment") or "—",
+            helpers.format_money(pl.get("est_cost", 0)),
+            pl.get("notes") or "—",
+        ])
+    if prows:
+        plan_html = (_section(t("پلان معالجه")) + _grid(
+            [t("دندان"), t("معالجه"), t("هزینه تخمینی"), t("یادداشت")], prows,
+            widths=[55, None, 110, None]) + "<div style='height:12pt;'></div>")
+
     return _wrap(_header(t("پرونده کامل مریض")) + info + timeline
-                 + chart_html + finance)
+                 + chart_html + plan_html + finance)
+
+
+# ---------------------------------------------------------------------------
+# Treatment plan
+# ---------------------------------------------------------------------------
+
+def treatment_plan_html(patient_id: int) -> str:
+    p = patient_model.get(patient_id)
+    if not p:
+        return ""
+    plans = plan_model.for_patient(patient_id)
+    rows = []
+    planned_total = 0.0
+    for i, pl in enumerate(plans, 1):
+        status = t(plan_model.STATUSES.get(pl.get("status"), ""))
+        if pl.get("status") == "planned":
+            planned_total += float(pl.get("est_cost") or 0)
+        rows.append([
+            helpers.jalali_digits(i),
+            helpers.jalali_digits(pl.get("tooth")) if pl.get("tooth") else "—",
+            pl.get("treatment") or "—",
+            helpers.format_money(pl.get("est_cost", 0)),
+            status,
+            pl.get("notes") or "—",
+        ])
+
+    body = _header(t("پلان معالجه"))
+    body += _section(t("مشخصات مریض")) + _info_table([
+        [(t("نام مریض"), p.get("full_name", "")),
+         (t("کود مریض"), helpers.jalali_digits(p.get("code", "")))],
+    ]) + "<div style='height:9pt;'></div>"
+    body += _section(t("موارد پلان معالجه")) + _grid(
+        ["#", "دندان", "معالجه", "هزینه تخمینی", "وضعیت", "یادداشت"],
+        rows, widths=[34, 55, None, 110, 90, None])
+    body += f"""
+    <div style='height:9pt;'></div>
+    <table width='100%' cellspacing='0' cellpadding='0'><tr>
+      <td class='amount' align='right'>{t('مجموع تخمینی موارد باقیمانده: ')}&nbsp; {helpers.format_money(planned_total)}</td>
+    </tr></table>
+    <br><br>
+    <table width='100%' cellspacing='0' cellpadding='0'>
+      <tr><td align='left' class='dsub' style='padding-top:30pt;'>
+        ...........................<br>{t('امضای داکتر')}</td></tr></table>
+    """
+    return _wrap(body)
 
 
 # ---------------------------------------------------------------------------

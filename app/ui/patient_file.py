@@ -19,12 +19,14 @@ from ..models import (
     patient as patient_model,
     payment as payment_model,
     prescription as prescription_model,
+    treatment_plan as plan_model,
     visit as visit_model,
 )
 from ..services import session
 from ..utils import helpers, printing
 from ..services.i18n import t
-from .dialogs import PatientDialog, PaymentDialog, VisitDialog
+from .dialogs import (
+    PatientDialog, PaymentDialog, TreatmentPlanDialog, VisitDialog)
 from .invoice_dialog import InvoiceDialog
 from .prescription_dialog import PrescriptionDialog
 from .widgets.actions import actions_cell, make_button, prepare_table
@@ -91,6 +93,15 @@ class PatientFilePage(QWidget):
             "border-radius:10px; padding:9px 14px; font-weight:700;")
         layout.addWidget(self.alert_label)
 
+        # Follow-up / recall reminder banner
+        self.recall_label = QLabel()
+        self.recall_label.setWordWrap(True)
+        self.recall_label.setVisible(False)
+        self.recall_label.setStyleSheet(
+            "background:#FFF7E6; color:#9A6700; border:1px solid #F3D58B;"
+            "border-radius:10px; padding:9px 14px; font-weight:700;")
+        layout.addWidget(self.recall_label)
+
         # Summary cards
         grid = QGridLayout()
         grid.setSpacing(12)
@@ -110,6 +121,7 @@ class PatientFilePage(QWidget):
 
         self._build_overview_tab()
         self._build_chart_tab()
+        self._build_plan_tab()
         self._build_visits_tab()
         self._build_prescriptions_tab()
         self._build_payments_tab()
@@ -274,6 +286,37 @@ class PatientFilePage(QWidget):
         lay.addWidget(self.odontogram)
         self.tabs.addTab(tab, t("🦷 چارت دندان"))
 
+    def _build_plan_tab(self):
+        tab = QWidget()
+        lay = QVBoxLayout(tab)
+        bar = QHBoxLayout()
+        self.add_plan_btn = QPushButton(t("➕ افزودن به پلان"))
+        self.add_plan_btn.setObjectName("Success")
+        self.add_plan_btn.clicked.connect(self._add_plan)
+        bar.addWidget(self.add_plan_btn)
+        bar.addStretch(1)
+        self.plan_total_label = QLabel()
+        self.plan_total_label.setStyleSheet("color:#0A6B61; font-weight:bold;")
+        bar.addWidget(self.plan_total_label)
+        self.print_plan_btn = QPushButton(t("🖨 چاپ پلان"))
+        self.print_plan_btn.clicked.connect(self._print_plan)
+        bar.addWidget(self.print_plan_btn)
+        lay.addLayout(bar)
+
+        self.plan_table = QTableWidget(0, 6)
+        self.plan_table.setHorizontalHeaderLabels([
+            t("دندان"), t("معالجه"), t("هزینه تخمینی"), t("وضعیت"),
+            t("یادداشت"), t("عملیات")])
+        prepare_table(self.plan_table)
+        self.plan_table.setEditTriggers(
+            QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.plan_table.setAlternatingRowColors(True)
+        h = self.plan_table.horizontalHeader()
+        h.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
+        h.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
+        lay.addWidget(self.plan_table)
+        self.tabs.addTab(tab, t("📝 پلان معالجه"))
+
     def _build_prescriptions_tab(self):
         tab = QWidget()
         lay = QVBoxLayout(tab)
@@ -309,6 +352,7 @@ class PatientFilePage(QWidget):
         self.add_payment_btn.setVisible(session.can("payment_add"))
         self.add_invoice_btn.setVisible(session.can("invoices"))
         self.add_presc_btn.setVisible(can_visit)
+        self.add_plan_btn.setVisible(can_visit)
         self.edit_btn.setVisible(session.can("patient_edit"))
 
     # -- Data loading -----------------------------------------------------
@@ -351,6 +395,8 @@ class PatientFilePage(QWidget):
 
         self.odontogram.set_patient(self.patient_id)
         self._fill_prescriptions()
+        self._fill_plan()
+        self._update_recall_banner(p)
 
         summary = patient_model.financial_summary(self.patient_id)
         self.val_visits.setText(helpers.jalali_digits(summary["visits"]))
@@ -367,6 +413,36 @@ class PatientFilePage(QWidget):
         self._fill_payments()
         self._fill_invoices()
         self._fill_files()
+
+    def _update_recall_banner(self, patient):
+        import datetime
+        parts = []
+        visits = visit_model.for_patient(self.patient_id, ascending=False)
+        if visits:
+            nxt = visits[0].get("next_visit_date")
+            if nxt:
+                try:
+                    days = (datetime.date.fromisoformat(nxt)
+                            - datetime.date.today()).days
+                except ValueError:
+                    days = None
+                if days is not None:
+                    when = helpers.jalali_date(nxt)
+                    if days < 0:
+                        parts.append("⏰ " + t("مراجعه بعدی گذشته است: ") + when)
+                    elif days == 0:
+                        parts.append("📅 " + t("مراجعه بعدی: امروز"))
+                    else:
+                        parts.append("📅 " + t("مراجعه بعدی: ") + when)
+        totals = plan_model.totals(self.patient_id)
+        if totals["planned_count"]:
+            parts.append("📝 " + t("معالجات باقیمانده در پلان: ")
+                         + helpers.jalali_digits(totals["planned_count"]))
+        if parts:
+            self.recall_label.setText("     ".join(parts))
+            self.recall_label.setVisible(True)
+        else:
+            self.recall_label.setVisible(False)
 
     def _fill_visits(self, visits):
         self.visits_table.setRowCount(0)
@@ -487,6 +563,64 @@ class PatientFilePage(QWidget):
 
     def _print_prescription(self, pid):
         self._print_or_pdf(printing.prescription_html(pid), "نسخه")
+
+    # -- Treatment plan ---------------------------------------------------
+    def _fill_plan(self):
+        self.plan_table.setRowCount(0)
+        plans = plan_model.for_patient(self.patient_id)
+        for pl in plans:
+            r = self.plan_table.rowCount()
+            self.plan_table.insertRow(r)
+            self.plan_table.setItem(r, 0, QTableWidgetItem(
+                helpers.jalali_digits(pl.get("tooth")) if pl.get("tooth") else "—"))
+            self.plan_table.setItem(r, 1, QTableWidgetItem(pl.get("treatment") or ""))
+            self.plan_table.setItem(r, 2, QTableWidgetItem(
+                helpers.format_money(pl.get("est_cost", 0))))
+            status_label = t(plan_model.STATUSES.get(pl.get("status"), ""))
+            self.plan_table.setItem(r, 3, QTableWidgetItem(status_label))
+            self.plan_table.setItem(r, 4, QTableWidgetItem(pl.get("notes") or "—"))
+            buttons = []
+            if session.can("visit_add"):
+                buttons.append(make_button("ویرایش", "default", "ویرایش پلان",
+                                           lambda pp=pl: self._edit_plan(pp)))
+                if pl.get("status") == "planned":
+                    buttons.append(make_button(
+                        "انجام شد", "primary", "علامت‌گذاری به‌عنوان انجام‌شده",
+                        lambda pid=pl["id"]: self._complete_plan(pid)))
+            if session.is_admin():
+                buttons.append(make_button("حذف", "danger", "حذف پلان",
+                                           lambda pid=pl["id"]: self._delete_plan(pid)))
+            if buttons:
+                self.plan_table.setCellWidget(r, 5, actions_cell(buttons))
+        totals = plan_model.totals(self.patient_id)
+        self.plan_total_label.setText(
+            t("باقیمانده پلان: ") + helpers.jalali_digits(totals["planned_count"])
+            + t(" مورد") + " · " + helpers.format_money(totals["planned_cost"]))
+
+    def _add_plan(self):
+        dlg = TreatmentPlanDialog(self, patient_id=self.patient_id)
+        if dlg.exec():
+            self.refresh()
+
+    def _edit_plan(self, plan):
+        dlg = TreatmentPlanDialog(self, patient_id=self.patient_id, plan=plan)
+        if dlg.exec():
+            self.refresh()
+
+    def _complete_plan(self, pid):
+        plan_model.set_status(pid, "done")
+        self.refresh()
+
+    def _delete_plan(self, pid):
+        if QMessageBox.question(
+            self, t("حذف"), t("این مورد از پلان حذف شود؟")
+        ) == QMessageBox.StandardButton.Yes:
+            plan_model.delete(pid)
+            self.refresh()
+
+    def _print_plan(self):
+        self._print_or_pdf(
+            printing.treatment_plan_html(self.patient_id), "پلان معالجه")
 
     def _fill_files(self):
         self.files_table.setRowCount(0)
