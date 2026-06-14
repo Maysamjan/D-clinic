@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
 from .. import config
 from ..models import clinic as clinic_model
 from ..services import license_service as lic
+from ..services import theme
 from ..services.i18n import t
 from ..utils import helpers
 
@@ -52,7 +53,8 @@ class AboutPage(QScrollArea):
         text = QVBoxLayout()
         text.setSpacing(3)
         name = QLabel(config.APP_NAME)
-        name.setStyleSheet("font-size:26px; font-weight:bold; color:#0B2A33;")
+        name.setStyleSheet(
+            "font-size:26px; font-weight:bold; color:" + theme.color("text") + ";")
         brand = QLabel(config.BRAND)
         brand.setStyleSheet("font-size:15px; color:#0E9F8E; font-weight:600;")
         slogan = QLabel(t(config.BRAND_SLOGAN))
@@ -68,9 +70,11 @@ class AboutPage(QScrollArea):
         return card
 
     def _row(self, grid: QGridLayout, r: int, label: str, value: str,
-             value_color: str = "#111B27"):
+             value_color: str | None = None):
+        if value_color is None:
+            value_color = theme.color("text")
         cap = QLabel(label)
-        cap.setStyleSheet("color:#64748b; font-size:13px;")
+        cap.setStyleSheet("color:" + theme.color("muted") + "; font-size:13px;")
         val = QLabel(value)
         val.setStyleSheet(
             f"color:{value_color}; font-weight:bold; font-size:14px;")
@@ -155,7 +159,8 @@ class AboutPage(QScrollArea):
         lay.addWidget(title)
         contact = QLabel(
             f"📞 {config.BRAND_PHONE}  ✉ {config.BRAND_EMAIL}")
-        contact.setStyleSheet("font-size:14px; color:#16202E; font-weight:600;")
+        contact.setStyleSheet(
+            "font-size:14px; color:" + theme.color("text") + "; font-weight:600;")
         contact.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextSelectableByMouse)
         lay.addWidget(contact)

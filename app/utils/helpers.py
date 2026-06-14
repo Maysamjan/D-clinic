@@ -93,13 +93,9 @@ def font_face_css() -> str:
 
 
 def load_stylesheet() -> str:
-    path = os.path.join(os.path.dirname(__file__), "..", "resources", "styles.qss")
-    path = os.path.abspath(path)
-    try:
-        with open(path, "r", encoding="utf-8") as fh:
-            return fh.read()
-    except OSError:
-        return ""
+    """Return the application stylesheet rendered for the active theme."""
+    from ..services import theme
+    return theme.build_stylesheet()
 
 
 def gender_label(value: str) -> str:

@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ..models import stats
+from ..services import theme
 from ..services.i18n import t
 from .widgets.charts import BarChart, HBarChart, LineChart
 
@@ -26,7 +27,8 @@ class ReportsPage(QScrollArea):
 
         header = QHBoxLayout()
         title = QLabel(t("گزارش‌ها و تحلیل‌ها"))
-        title.setStyleSheet("font-size:18px; font-weight:bold; color:#0f2942;")
+        title.setStyleSheet(
+            "font-size:18px; font-weight:bold; color:" + theme.color("text") + ";")
         header.addWidget(title)
         header.addStretch(1)
         header.addWidget(QLabel(t("بازه:")))

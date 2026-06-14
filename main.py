@@ -30,9 +30,10 @@ class Application:
         except Exception:  # noqa: BLE001 — never block startup on backup
             pass
 
-        from app.services import i18n
+        from app.services import i18n, theme
         from app.models import clinic as clinic_model
         i18n.set_language(clinic_model.get_language())
+        theme.set_theme(clinic_model.get_theme())
 
         self.app = QApplication(sys.argv)
         self.app.setApplicationName(config.APP_NAME)
@@ -138,10 +139,11 @@ class Application:
         self.main_window.show()
 
     def _relaunch(self):
-        """Rebuild the main window after a language change."""
-        from app.services import i18n, session
+        """Rebuild the main window after a language or theme change."""
+        from app.services import i18n, session, theme
         from app.models import clinic as clinic_model
         i18n.set_language(clinic_model.get_language())
+        theme.set_theme(clinic_model.get_theme())
         self._apply_direction()
         self.app.setStyleSheet(helpers.load_stylesheet())
         if session.current_user:

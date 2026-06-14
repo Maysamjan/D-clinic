@@ -382,6 +382,8 @@ def _migrate() -> None:
         db.execute("ALTER TABLE clinics ADD COLUMN city TEXT DEFAULT ''")
     if "registered" not in ccols:
         db.execute("ALTER TABLE clinics ADD COLUMN registered INTEGER DEFAULT 0")
+    if "theme" not in ccols:
+        db.execute("ALTER TABLE clinics ADD COLUMN theme TEXT DEFAULT 'light'")
 
     # Visit follow-up / recall date.
     vcols = {r["name"] for r in db.query_all("PRAGMA table_info(visits)")}

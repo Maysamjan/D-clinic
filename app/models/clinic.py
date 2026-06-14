@@ -44,3 +44,12 @@ def get_language() -> str:
 
 def set_language(lang: str) -> None:
     db.execute("UPDATE clinics SET language = ? WHERE id = 1", (lang,))
+
+
+def get_theme() -> str:
+    row = db.query_one("SELECT theme FROM clinics WHERE id = 1")
+    return (row["theme"] if row and row["theme"] else "light")
+
+
+def set_theme(name: str) -> None:
+    db.execute("UPDATE clinics SET theme = ? WHERE id = 1", (name,))

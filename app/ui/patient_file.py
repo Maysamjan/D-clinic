@@ -22,7 +22,7 @@ from ..models import (
     treatment_plan as plan_model,
     visit as visit_model,
 )
-from ..services import session
+from ..services import session, theme
 from ..utils import helpers, printing
 from ..services.i18n import t
 from .dialogs import (
@@ -67,7 +67,7 @@ class PatientFilePage(QWidget):
 
         self.name_label = QLabel()
         self.name_label.setStyleSheet(
-            "font-size:20px; font-weight:bold; color:#0f2942;")
+            "font-size:20px; font-weight:bold; color:" + theme.color("text") + ";")
         top.addWidget(self.name_label)
         self.code_label = QLabel()
         self.code_label.setStyleSheet(

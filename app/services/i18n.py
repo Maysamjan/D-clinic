@@ -455,6 +455,9 @@ _EN: dict[str, str] = {
     "رمز عبور فعلی اشتباه است.": "Current password is incorrect.",
     "زبان برنامه تغییر کرد. برنامه دوباره بارگذاری می‌شود.":
         "Application language changed. The app will reload.",
+    "حالت نمایش": "Display mode",
+    "روشن": "Light",
+    "تاریک": "Dark",
 
     # Print document titles / sections
     "پرونده کامل مریض": "Complete Patient File",

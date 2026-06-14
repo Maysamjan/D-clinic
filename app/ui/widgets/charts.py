@@ -10,14 +10,27 @@ from PyQt6.QtCore import QPointF, QRectF, Qt
 from PyQt6.QtGui import QColor, QFont, QPainter, QPen, QPolygonF, QBrush
 from PyQt6.QtWidgets import QWidget
 
-from ...services import jalali
+from ...services import jalali, theme
 from ...services.i18n import t
 
 _BLUE = QColor("#2563eb")
 _GREEN = QColor("#16a34a")
-_GRID = QColor("#e6ebf2")
-_TEXT = QColor("#64748b")
-_DARK = QColor("#0f2942")
+
+
+def _bg() -> QColor:
+    return QColor(theme.color("chart_bg"))
+
+
+def _grid() -> QColor:
+    return QColor(theme.color("chart_grid"))
+
+
+def _text() -> QColor:
+    return QColor(theme.color("chart_text"))
+
+
+def _value() -> QColor:
+    return QColor(theme.color("chart_value"))
 
 
 def _fmt(n: float) -> str:
@@ -42,20 +55,20 @@ class BarChart(QWidget):
     def paintEvent(self, event):
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        p.fillRect(self.rect(), QColor("#ffffff"))
+        p.fillRect(self.rect(), _bg())
         w, h = self.width(), self.height()
         left, right, top, bottom = 20, 20, 18, 36
         plot_w = w - left - right
         plot_h = h - top - bottom
 
         if not self._data:
-            p.setPen(_TEXT)
+            p.setPen(_text())
             p.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, t("داده‌ای موجود نیست"))
             return
 
         max_val = max((v for _, v in self._data), default=0) or 1
         # grid lines
-        p.setPen(QPen(_GRID, 1))
+        p.setPen(QPen(_grid(), 1))
         for i in range(5):
             y = top + plot_h * i / 4
             p.drawLine(int(left), int(y), int(w - right), int(y))
@@ -74,11 +87,11 @@ class BarChart(QWidget):
             p.setPen(Qt.PenStyle.NoPen)
             p.drawRoundedRect(rect, 6, 6)
             # value label
-            p.setPen(_DARK)
+            p.setPen(_value())
             p.drawText(QRectF(x - 12, y - 18, bar_w + 24, 16),
                        Qt.AlignmentFlag.AlignCenter, _fmt(value))
             # category label
-            p.setPen(_TEXT)
+            p.setPen(_text())
             p.drawText(QRectF(left + slot * i, top + plot_h + 4, slot, 28),
                        Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap, label)
         p.end()
@@ -100,19 +113,19 @@ class LineChart(QWidget):
     def paintEvent(self, event):
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        p.fillRect(self.rect(), QColor("#ffffff"))
+        p.fillRect(self.rect(), _bg())
         w, h = self.width(), self.height()
         left, right, top, bottom = 20, 20, 18, 36
         plot_w = w - left - right
         plot_h = h - top - bottom
 
         if not self._data:
-            p.setPen(_TEXT)
+            p.setPen(_text())
             p.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, t("داده‌ای موجود نیست"))
             return
 
         max_val = max((v for _, v in self._data), default=0) or 1
-        p.setPen(QPen(_GRID, 1))
+        p.setPen(QPen(_grid(), 1))
         for i in range(5):
             y = top + plot_h * i / 4
             p.drawLine(int(left), int(y), int(w - right), int(y))
@@ -147,10 +160,10 @@ class LineChart(QWidget):
             p.setBrush(QBrush(self._color))
             p.setPen(Qt.PenStyle.NoPen)
             p.drawEllipse(pt, 4, 4)
-            p.setPen(_DARK)
+            p.setPen(_value())
             p.drawText(QRectF(pt.x() - 26, pt.y() - 20, 52, 16),
                        Qt.AlignmentFlag.AlignCenter, _fmt(value))
-            p.setPen(_TEXT)
+            p.setPen(_text())
             p.drawText(QRectF(left + step * i - step / 2, top + plot_h + 4, step, 28),
                        Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap, label)
         p.end()
@@ -173,11 +186,11 @@ class HBarChart(QWidget):
     def paintEvent(self, event):
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        p.fillRect(self.rect(), QColor("#ffffff"))
+        p.fillRect(self.rect(), _bg())
         w, h = self.width(), self.height()
 
         if not self._data:
-            p.setPen(_TEXT)
+            p.setPen(_text())
             p.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, t("داده‌ای موجود نیست"))
             return
 
@@ -194,7 +207,7 @@ class HBarChart(QWidget):
             cy = y + row_h / 2
             bw = (value / max_val) * bar_area
             # label on the right (RTL)
-            p.setPen(_DARK)
+            p.setPen(_value())
             p.drawText(QRectF(w - label_w - 4, y, label_w, row_h),
                        Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
                        label)
@@ -205,7 +218,7 @@ class HBarChart(QWidget):
             p.setPen(Qt.PenStyle.NoPen)
             p.drawRoundedRect(rect, 6, 6)
             # value at left end of bar
-            p.setPen(_TEXT)
+            p.setPen(_text())
             p.drawText(QRectF(bx - right_pad - 4, cy - 11, right_pad, 22),
                        Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
                        _fmt(value))

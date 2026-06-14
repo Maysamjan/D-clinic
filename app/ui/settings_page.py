@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (
 from .. import config
 from ..models import clinic as clinic_model
 from ..models import user as user_model
-from ..services import backup_service, session
+from ..services import backup_service, session, theme
 from ..utils import helpers
 from PyQt6.QtWidgets import QComboBox
 from ..services import i18n
@@ -28,6 +28,7 @@ class SettingsPage(QWidget):
     clinic_updated = pyqtSignal()
     data_restored = pyqtSignal()
     language_changed = pyqtSignal()
+    theme_changed = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -77,6 +78,18 @@ class SettingsPage(QWidget):
             self.language.setCurrentIndex(_li)
         lang_row.addWidget(self.language, 1)
         lay.addLayout(lang_row)
+
+        # Theme (Light / Dark)
+        theme_row = QHBoxLayout()
+        theme_row.addWidget(QLabel(t("حالت نمایش") + ":"))
+        self.theme = QComboBox()
+        self.theme.addItem("☀ " + t("روشن"), theme.LIGHT)
+        self.theme.addItem("🌙 " + t("تاریک"), theme.DARK)
+        _ti = self.theme.findData(theme.get_theme())
+        if _ti >= 0:
+            self.theme.setCurrentIndex(_ti)
+        theme_row.addWidget(self.theme, 1)
+        lay.addLayout(theme_row)
 
         # Logo
         logo_row = QHBoxLayout()
@@ -266,10 +279,18 @@ class SettingsPage(QWidget):
         lang_changed = new_lang != i18n.get_language()
         if lang_changed:
             clinic_model.set_language(new_lang)
+        new_theme = self.theme.currentData()
+        theme_changed = new_theme != theme.get_theme()
+        if theme_changed:
+            clinic_model.set_theme(new_theme)
         QMessageBox.information(self, t("ذخیره شد"), t("تنظیمات کلینیک ذخیره شد."))
         self.clinic_updated.emit()
         if lang_changed:
             self.language_changed.emit()
+        elif theme_changed:
+            # Rebuild the UI so the new palette is applied everywhere at once
+            # (a language change already triggers the same full relaunch).
+            self.theme_changed.emit()
 
     # -- Backups ----------------------------------------------------------
     def _manual_backup(self):

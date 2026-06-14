@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ..models import staff as staff_model
-from ..services import session
+from ..services import session, theme
 from ..utils import helpers, printing
 from ..services.i18n import t
 from .widgets.actions import actions_cell, make_button, prepare_table
@@ -234,7 +234,8 @@ class StaffDetailDialog(QDialog):
         member = staff_model.get(staff_id) or {}
         head = QHBoxLayout()
         name = QLabel(member.get("full_name", ""))
-        name.setStyleSheet("font-size:20px; font-weight:700; color:#14253B;")
+        name.setStyleSheet(
+            "font-size:20px; font-weight:700; color:" + theme.color("text") + ";")
         pos = QLabel(member.get("position", ""))
         pos.setObjectName("Pill")
         head.addWidget(name)
