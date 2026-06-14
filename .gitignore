@@ -7,6 +7,9 @@ venv/
 build/
 dist/
 *.spec
+!D-Clinic.spec
+# Inno Setup output
+installer/Output/
 
 # Application runtime data (kept local, never committed)
 /data/

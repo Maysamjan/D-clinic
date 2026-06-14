@@ -50,57 +50,102 @@ Or simply launch the app, open **Settings → Restore**, and choose
 
 ---
 
-## 3. Build a standalone Windows .exe (PyInstaller)
+## 3. Build the production .exe + installer (Windows)
 
-### Easiest — use the build script
+The build is driven by a **PyInstaller spec** (`D-Clinic.spec`) and an
+**Inno Setup script** (`installer/D-Clinic.iss`), tied together by
+`build.bat`.
 
-On Windows just double-click / run **`build.bat`**, which performs all the
-steps below and produces `dist/D-Clinic/D-Clinic.exe`:
+> **Before building — set your company details.** Open `app/config.py` and
+> edit `BRAND`, `BRAND_SLOGAN`, `BRAND_PHONE`, `BRAND_EMAIL` (the phone and
+> email shown on the login screen are placeholders). After changing the
+> brand letters, regenerate the logo/icon with `python tools/make_logo.py`.
+
+### One command — `build.bat`
+
+On a Windows machine with Python installed, just run:
 
 ```bat
 build.bat
 ```
 
-### Manual command
+It will:
+1. install/upgrade PyInstaller and the requirements,
+2. clean old `build/` and `dist/`,
+3. build the app from `D-Clinic.spec`  → **`dist\D-Clinic\D-Clinic.exe`**,
+4. if **Inno Setup 6** is installed, compile the installer
+   → **`installer\Output\D-Clinic-Setup-1.0.0.exe`**.
 
-```bash
+(If Inno Setup isn't found it simply skips step 4 and you can still ship the
+portable `dist\D-Clinic\` folder.)
+
+### What the spec bundles
+
+`D-Clinic.spec` produces a **one-folder** build (faster startup and far fewer
+"missing resource" problems than one-file) and ships everything the app needs
+so it runs on a **clean Windows PC with no Python installed**:
+
+| Bundled | From |
+|---|---|
+| App icon (`icon.ico`) + window icon (`icon.png`) | `assets/` |
+| **ZS** brand logo (`logo.png`) | `assets/` |
+| Vazirmatn RTL/UI fonts | `assets/fonts/` |
+| Qt stylesheet | `app/resources/styles.qss` |
+| License-activation component (`winreg`) | bundled on Windows |
+| Print/PDF support (`QtPrintSupport`) | hidden import |
+
+The spec also embeds Windows file metadata via `version_info.txt`
+(Company **Zenith Soft**, Product **D-Clinic**, Description **Dental Clinic
+Management System**, Version **1.0.0**, Copyright **Zenith Soft**) — visible
+in the .exe's *Properties → Details* tab.
+
+### Manual build (without the script)
+
+```bat
 pip install pyinstaller
-
-pyinstaller --noconfirm --windowed --name D-Clinic ^
-    --icon assets/icon.ico ^
-    --add-data "app/resources/styles.qss;app/resources" ^
-    --add-data "assets;assets" ^
-    main.py
+pyinstaller --noconfirm --clean D-Clinic.spec
+"%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe" installer\D-Clinic.iss
 ```
 
-> On Linux/macOS replace the `;` separator with `:` in `--add-data` and
-> use `\` line continuation instead of `^`:
-> ```bash
-> pyinstaller --noconfirm --windowed --name D-Clinic \
->     --icon assets/icon.ico \
->     --add-data "app/resources/styles.qss:app/resources" \
->     --add-data "assets:assets" \
->     main.py
-> ```
+### The installer
 
-> The bundled **Vazirmatn** font lives in `assets/fonts` and the **ZS**
-> brand logo / app icon live in `assets/` — the `--add-data "assets;assets"`
-> flag ships them inside the executable so the UI, login branding and
-> printed documents look identical on every machine. The
-> `--icon assets/icon.ico` flag sets the Windows taskbar / desktop icon.
+Compiling `installer/D-Clinic.iss` with Inno Setup 6 produces
+**`installer\Output\D-Clinic-Setup-1.0.0.exe`**, which:
 
-Results:
-- One-folder build: `dist/D-Clinic/D-Clinic.exe` (portable folder)
-- For a single-file build add `--onefile` (slower startup).
+- installs into **Program Files** (`C:\Program Files\D-Clinic`),
+- creates a **Desktop** shortcut (optional checkbox) and a **Start Menu**
+  shortcut,
+- creates the shared, user-writable data folders under
+  `C:\ProgramData\Zenith Soft\D-Clinic\` (`data`, `data\logos`, `backups`,
+  `attachments`),
+- offers to **launch D-Clinic** when setup finishes,
+- **preserves** all patient data on uninstall / upgrade (only the program
+  files in Program Files are removed).
 
-The produced executable is fully **offline** and stores its data
-(`data/`, `backups/`, `attachments/`) next to the `.exe`.
+### Where data is stored
 
-> **Before building — set your company details.** Open `app/config.py` and
-> edit `BRAND`, `BRAND_SLOGAN`, `BRAND_PHONE` and `BRAND_EMAIL` (the phone
-> and email shown on the login screen are placeholders). To regenerate the
-> logo/icon after changing the brand letters, run
-> `python tools/make_logo.py`.
+Because Program Files is not writable by standard users, the installed app
+keeps its database, backups and attachments in a shared location that every
+Windows account on the clinic PC can use:
+
+```
+C:\ProgramData\Zenith Soft\D-Clinic\
+    data\dclinic.db
+    backups\
+    attachments\
+```
+
+(When you run from source it still uses the project folder, and a portable
+build with no `%PROGRAMDATA%` falls back to the folder next to the `.exe`.)
+
+### Tested Windows versions
+
+The installer targets **Windows 8, 8.1, 10 and 11** (`MinVersion=6.2` in the
+`.iss`). The build was validated on the build host (spec parses, every
+resource is bundled, all imports resolve); **run the produced
+`D-Clinic-Setup-1.0.0.exe` once on each target Windows version** to confirm
+the full install → launch → activation → print flow before commercial
+release.
 
 ---
 

@@ -14,13 +14,24 @@ import sys
 # ---------------------------------------------------------------------------
 
 def _base_dir() -> str:
-    """Return the directory that holds the application data.
+    """Return the directory that holds the writable application data.
 
-    When frozen with PyInstaller we store data next to the executable,
-    otherwise next to the source tree.
+    When frozen with PyInstaller the program is normally installed under
+    ``C:\\Program Files`` where standard users may not write, so the database,
+    backups and attachments are kept in a shared, user-writable location
+    (``%PROGRAMDATA%\\Zenith Soft\\D-Clinic``) so the clinic database is shared
+    by every Windows account on the machine. If ``%PROGRAMDATA%`` is somehow
+    unavailable we fall back to the folder next to the executable (portable
+    use). From source we store data next to the project tree.
     """
     if getattr(sys, "frozen", False):
-        return os.path.dirname(sys.executable)
+        if sys.platform.startswith("win"):
+            root = os.environ.get("PROGRAMDATA")
+            if root and os.path.isdir(root):
+                return os.path.join(root, "Zenith Soft", "D-Clinic")
+            return os.path.dirname(sys.executable)
+        # Non-Windows frozen build: keep data in the user's home directory.
+        return os.path.join(os.path.expanduser("~"), ".d-clinic")
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -60,6 +71,7 @@ CURRENCY = "AFN"
 
 # Application metadata
 APP_NAME = "D-Clinic"
+APP_VERSION = "1.0.0"
 APP_TITLE = "سیستم مدیریت کلینیک دندانپزشکی"  # Dental Clinic Management System
 
 # ---------------------------------------------------------------------------
