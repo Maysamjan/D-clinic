@@ -112,6 +112,18 @@ class PatientDialog(QDialog):
             QMessageBox.warning(self, t("خطا"), t("نام مریض الزامی است."))
             return
         age = self.age.value() or None
+        if not self.patient:
+            # Enforce the DEMO license patient cap before creating a new file.
+            from ..services import license_service as lic
+            allowed, _reason = lic.can_add_patient()
+            if not allowed:
+                limit = lic.status().get("max_patients", 0)
+                QMessageBox.warning(
+                    self, t("محدودیت نسخه آزمایشی"),
+                    t("در نسخه آزمایشی، حداکثر تعداد مریض قابل ثبت {n} نفر است.\n"
+                      "برای ثبت مریض بیشتر، نسخه کامل را فعال کنید.").replace(
+                          "{n}", helpers.jalali_digits(limit)))
+                return
         if self.patient:
             patient_model.update(
                 self.patient["id"], name, self.phone.text(),

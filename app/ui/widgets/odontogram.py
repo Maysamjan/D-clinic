@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ...models import odontogram as odo
-from ...services import jalali
+from ...services import jalali, theme
 from ...services.i18n import digits, t
 from .dialog_header import setup_form_dialog
 
@@ -71,7 +71,8 @@ class _ToothDialog(QDialog):
                              + " — " + (v.get("treatment_name") or t("ویزیت"))
                              + (("  (" + (v.get("doctor_name") or "") + ")")
                                 if v.get("doctor_name") else ""))
-                row.setStyleSheet("color:#334155; font-size:12px;")
+                row.setStyleSheet(
+                    "color:" + theme.color("muted") + "; font-size:12px;")
                 row.setWordWrap(True)
                 box.addWidget(row)
             layout.addLayout(box)

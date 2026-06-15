@@ -26,25 +26,55 @@ so it asks for a new key — which only you can create.
 
 ---
 
-## Generating a key
+## License types — DEMO and FULL
+
+D-Clinic supports two kinds of license, both signed with your private key and
+locked to one machine:
+
+| | **FULL** | **DEMO** |
+|---|---|---|
+| Expiry | never | a date you choose (7 / 15 / 30 or custom days) |
+| Patient limit | none | a cap you choose (e.g. 50) |
+| Watermark on prints | none | `DEMO VERSION - ZENITH SOFT` on every page |
+| About page | shows *Full (FULL)* | shows remaining days + patient quota |
+
+The license terms are **inside the signed key** — the customer cannot extend
+the expiry, raise the patient cap, or remove the watermark without a new key
+that only you can produce.
+
+### Generating a key
 
 On **your** computer (with `license_private/private_key.hex` present):
 
 ```bash
+# FULL (perpetual) — the default
 python tools/keygen.py A1B2C-D3E4F-5A6B7-C8D9E
+python tools/keygen.py --full A1B2C-D3E4F-5A6B7-C8D9E
+
+# DEMO — expiring + patient-capped
+python tools/keygen.py --demo --days 30 --max-patients 50  A1B2C-D3E4F-5A6B7-C8D9E
+python tools/keygen.py --demo --days 7  --max-patients 20  A1B2C-D3E4F-5A6B7-C8D9E
+python tools/keygen.py --demo --expiry 2026-09-01 --max-patients 100 A1B2C-...
 ```
 
-Output:
+Output (DEMO example):
 
 ```
-Machine ID : A1B2C-D3E4F-5A6B7-C8D9E
-Product Key: MFRGG-ZDFMZ-TWQ2L-K5...   (give this to the customer)
+Machine ID  : A1B2C-D3E4F-5A6B7-C8D9E
+License type: DEMO
+Expires on  : 2026-07-14 (30 days)
+Patient cap : 50
+Product Key : DCL2.RENI...   (give this to the customer)
 License file written: A1B2CD3E4F5A6B7C8D9E.lic
 ```
 
 Send the customer **either** the `Product Key` text **or** the `.lic`
-file. The key is long because it is a strong cryptographic signature; the
-customer only pastes it once.
+file. The key is long because it is a strong cryptographic signature plus the
+signed license terms; the customer only pastes it once.
+
+> Renewing a DEMO: generate a new key (FULL, or a DEMO with a later date) for
+> the same Machine ID. When the old demo expires the app shows a renewal
+> screen where the customer pastes the new key.
 
 ---
 
@@ -67,11 +97,22 @@ issued keys stop working after this.)
 
 ## Security notes
 
-* Keys are **Ed25519 signatures** of the Machine ID. They cannot be forged
-  without the private key, and a key made for one machine fails on any
-  other machine.
+* Keys are **Ed25519 signatures**. A FULL key signs the Machine ID; a DEMO/FULL
+  v2 key signs the full license payload (type, expiry, patient cap, Machine
+  ID). They cannot be forged without the private key, and a key made for one
+  machine fails on any other machine.
 * The stored activation (`data/license.dat`) is re-verified against the
   live hardware on **every start**, so copying the data folder does not
   bypass it.
+* **Clock-rollback protection:** the last run date (and the furthest date ever
+  seen) is kept in a machine-bound, HMAC-protected `data/runstate.dat`. If the
+  Windows clock is moved backwards past a small tolerance to dodge a DEMO
+  expiry, the app detects it on the next start and **refuses to run** until the
+  date is corrected. The file cannot be hand-edited because the HMAC key is
+  derived from the machine fingerprint.
+* **Backward compatibility:** legacy v1.0.0 keys (a bare base32 signature of
+  the Machine ID) keep working and are treated as perpetual **FULL** licenses,
+  so existing customers are never locked out.
+* The whole system is **completely offline** — no server, no network calls.
 * For maximum protection against tampering, distribute the app as a
   compiled Windows executable (see `BUILD.md`).

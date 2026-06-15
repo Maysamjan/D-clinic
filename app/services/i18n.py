@@ -455,6 +455,9 @@ _EN: dict[str, str] = {
     "رمز عبور فعلی اشتباه است.": "Current password is incorrect.",
     "زبان برنامه تغییر کرد. برنامه دوباره بارگذاری می‌شود.":
         "Application language changed. The app will reload.",
+    "حالت نمایش": "Display mode",
+    "روشن": "Light",
+    "تاریک": "Dark",
 
     # Print document titles / sections
     "پرونده کامل مریض": "Complete Patient File",
@@ -590,4 +593,31 @@ _EN: dict[str, str] = {
     "ثبت و ادامه": "Save & continue",
     "نام کلینیک، نام داکتر و شماره تلفن الزامی است.":
         "Clinic name, doctor name and phone number are required.",
+
+    # --- Licensing (DEMO / FULL) -----------------------------------------
+    "نوع جواز": "License type",
+    "نسخه آزمایشی (DEMO)": "Demo (DEMO)",
+    "نسخه کامل (FULL)": "Full (FULL)",
+    "اعتبار باقی‌مانده": "Validity remaining",
+    "روز باقی‌مانده": "days remaining",
+    "منقضی شده": "Expired",
+    "تاریخ انقضا": "Expiry date",
+    "سهمیه مریض": "Patient quota",
+    "خطای ساعت سیستم": "System clock error",
+    "تاریخ سیستم به عقب تغییر کرده است.\n\n"
+    "برای جلوگیری از دور زدن محدودیت جواز، اجرای برنامه متوقف شد. "
+    "لطفاً تاریخ و ساعت ویندوز را به زمان درست تنظیم کنید و دوباره "
+    "برنامه را باز کنید.":
+        "The system date has been moved backwards.\n\n"
+        "To prevent bypassing the license limit, the application has been "
+        "stopped. Please set the Windows date and time correctly and reopen "
+        "the application.",
+    "جواز نسخه آزمایشی به پایان رسیده است. برای ادامه، "
+    "کلید محصول جدید را وارد کنید.":
+        "The demo license has expired. To continue, enter a new product key.",
+    "محدودیت نسخه آزمایشی": "Demo limit",
+    "در نسخه آزمایشی، حداکثر تعداد مریض قابل ثبت {n} نفر است.\n"
+    "برای ثبت مریض بیشتر، نسخه کامل را فعال کنید.":
+        "The demo version allows registering at most {n} patients.\n"
+        "Activate the full version to register more patients.",
 }

@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
 
 from .. import config
 from ..models import user as user_model
-from ..services import session
+from ..services import session, theme
 from ..services.i18n import t
 
 
@@ -76,7 +76,7 @@ class LoginWindow(QWidget):
 
         # Right login form
         right = QFrame()
-        right.setStyleSheet("background-color:#f3f6fb;")
+        right.setStyleSheet("background-color:" + theme.color("bg") + ";")
         rl = QVBoxLayout(right)
         rl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         rl.setContentsMargins(40, 40, 40, 40)

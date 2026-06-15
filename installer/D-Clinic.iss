@@ -5,11 +5,11 @@
 ;  Build the app first (build.bat or: pyinstaller --noconfirm D-Clinic.spec)
 ;  so that  dist\D-Clinic\D-Clinic.exe  exists, then compile this script with
 ;  Inno Setup 6:   "ISCC.exe" installer\D-Clinic.iss
-;  Output:         installer\Output\D-Clinic-Setup-1.0.0.exe
+;  Output:         installer\Output\D-Clinic-Setup-1.1.0.exe
 ; ===========================================================================
 
 #define MyAppName        "D-Clinic"
-#define MyAppVersion      "1.0.0"
+#define MyAppVersion      "1.1.0"
 #define MyAppPublisher    "Zenith Soft"
 #define MyAppDescription  "Dental Clinic Management System"
 #define MyAppExeName      "D-Clinic.exe"
@@ -45,8 +45,9 @@ SolidCompression=yes
 OutputDir=Output
 OutputBaseFilename=D-Clinic-Setup-{#MyAppVersion}
 
-; Runs on Windows 8 / 8.1 / 10 / 11 (and Server equivalents).
-MinVersion=6.2
+; Supported OS: Windows 10 and Windows 11 only. MinVersion=10.0 blocks install
+; on Windows 8 / 8.1 (and older), which the Qt 6 runtime does not support.
+MinVersion=10.0
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

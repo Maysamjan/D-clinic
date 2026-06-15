@@ -228,6 +228,7 @@ class MainWindow(QMainWindow):
             self.settings.data_restored.connect(self._on_data_restored)
             if self._on_relaunch:
                 self.settings.language_changed.connect(self._on_relaunch)
+                self.settings.theme_changed.connect(self._on_relaunch)
             self._add_page("settings", self.settings)
 
         self.about = AboutPage()

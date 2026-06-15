@@ -1,0 +1,10 @@
+# Zenith Soft License Manager — vendor tool dependencies
+#
+# Pin the three PyQt6 packages to the SAME Qt version. A mismatch between PyQt6
+# (bindings) and PyQt6-Qt6 (the Qt DLLs) causes the Windows launch error:
+#     ImportError: DLL load failed while importing QtCore:
+#     The specified procedure could not be found.
+# Same matched set as the main D-Clinic app (Windows 10/11).
+PyQt6==6.6.1
+PyQt6-Qt6==6.6.1
+PyQt6-sip==13.6.0
