@@ -52,7 +52,7 @@ from . import ed25519
 
 # Public verification key (hex). The matching private key is held only by the
 # vendor and is never distributed with the application.
-PUBLIC_KEY_HEX = "43c889351bdc0f4cf56c09c22e08433ff99d755fc198294c572035ddef81a661"
+PUBLIC_KEY_HEX = "1a53ec7f39c565c99ae1032884aadc8a19cbf592630a3b77315ce7eea1b08538"
 _PUBLIC_KEY = bytes.fromhex(PUBLIC_KEY_HEX)
 
 _LICENSE_FILE = os.path.join(config.DATA_DIR, "license.dat")
