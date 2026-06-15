@@ -62,13 +62,50 @@ def generate_pair() -> None:
         fh.write(sk.hex())
     print("New key pair generated.")
     print("Private key saved to:", PRIVATE_KEY_PATH, "(KEEP SECRET)")
-    print("\nPut this in app/services/license_service.py -> PUBLIC_KEY_HEX:")
+    print()
+    print("!" * 70)
+    print("ACTION REQUIRED: paste the public key below into")
+    print("    app/services/license_service.py  ->  PUBLIC_KEY_HEX")
+    print("and REBUILD the app. Until you do, the app will REJECT every key")
+    print("this private key produces. (All previously issued keys also stop")
+    print("working after generating a new pair.)")
+    print("!" * 70)
     print(pk.hex())
 
 
 def _load_private() -> bytes:
     with open(PRIVATE_KEY_PATH, "r", encoding="utf-8") as fh:
         return bytes.fromhex(fh.read().strip())
+
+
+def _check_pair_matches_app() -> None:
+    """Abort if the private key does not match the app's embedded public key.
+
+    This is the #1 cause of "keygen runs but the app rejects the key": the
+    private key in license_private/private_key.hex was regenerated (e.g. with
+    --new) without pasting the new public key into license_service.py, so every
+    key the app verifies fails. We catch it here, before issuing a bad key.
+    """
+    pk = ed25519.publickey(_load_private())
+    if pk.hex().lower() != lic.PUBLIC_KEY_HEX.lower():
+        print("=" * 70)
+        print("ERROR: key-pair mismatch — the app would REJECT every key from")
+        print("this private key, because it does not match the public key")
+        print("embedded in app/services/license_service.py.")
+        print()
+        print("Your private key's public key is:")
+        print("    " + pk.hex())
+        print()
+        print("The app currently expects PUBLIC_KEY_HEX =")
+        print("    " + lic.PUBLIC_KEY_HEX)
+        print()
+        print("FIX (choose one):")
+        print("  • Use the ORIGINAL private key that matches the shipped app, OR")
+        print("  • Paste the public key above into PUBLIC_KEY_HEX in")
+        print("    app/services/license_service.py and REBUILD the app, so the")
+        print("    app and your keys use the same key pair.")
+        print("=" * 70)
+        raise SystemExit(2)
 
 
 def make_token(machine_id: str, license_type: str, expiry: datetime.date | None,
@@ -124,6 +161,9 @@ def main(argv: list[str]) -> int:
         print("ERROR: private key not found at", PRIVATE_KEY_PATH)
         print("Run 'python tools/keygen.py --new' to create one.")
         return 1
+
+    # Fail fast if this private key won't match the app's embedded public key.
+    _check_pair_matches_app()
 
     license_type = lic.TYPE_DEMO if args.demo else lic.TYPE_FULL
     expiry = None
