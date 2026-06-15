@@ -8,8 +8,14 @@ build/
 dist/
 *.spec
 !D-Clinic.spec
+!vendor_tools/license_manager/LicenseManager.spec
 # Inno Setup output
 installer/Output/
+vendor_tools/license_manager/Output/
+
+# Vendor License Manager runtime artefacts (never commit)
+vendor_tools/license_manager/generated_licenses/
+vendor_tools/license_manager/data/
 
 # Application runtime data (kept local, never committed)
 /data/

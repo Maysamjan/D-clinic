@@ -1,0 +1,3 @@
+# Zenith Soft License Manager — vendor tool dependencies
+# Same Qt 6.5 LTS line as D-Clinic for consistency.
+PyQt6>=6.5,<6.6
