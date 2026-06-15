@@ -10,7 +10,7 @@ from PyQt6.QtCore import QPointF, QRectF, Qt
 from PyQt6.QtGui import QColor, QFont, QPainter, QPen, QPolygonF, QBrush
 from PyQt6.QtWidgets import QWidget
 
-from ...services import jalali, theme
+from ...services import i18n, theme
 from ...services.i18n import t
 
 _BLUE = QColor("#2563eb")
@@ -34,9 +34,10 @@ def _value() -> QColor:
 
 
 def _fmt(n: float) -> str:
+    # Localised digits: Persian in fa mode, ASCII in en mode.
     if n == int(n):
-        return jalali.to_persian_digits(f"{int(n):,}")
-    return jalali.to_persian_digits(f"{n:,.0f}")
+        return i18n.digits(f"{int(n):,}")
+    return i18n.digits(f"{n:,.0f}")
 
 
 class BarChart(QWidget):
