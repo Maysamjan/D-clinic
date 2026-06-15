@@ -500,7 +500,7 @@ def prescription_html(presc_id: int) -> str:
         body += f"<div class='dsub' style='margin-top:10pt;'>{t('یادداشت: ')}{pres['notes']}</div>"
     body += ("<table width='100%' cellspacing='0' cellpadding='0'>"
              "<tr><td align='left' class='dsub' style='padding-top:40pt;'>"
-             "...........................<br>{t('امضای داکتر')}</td></tr></table>")
+             f"...........................<br>{t('امضای داکتر')}</td></tr></table>")
     return _wrap(body)
 
 
