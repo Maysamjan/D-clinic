@@ -12,6 +12,8 @@ Build (from this folder):  pyinstaller --noconfirm LicenseManager.spec
 
 import os
 
+from PyInstaller.utils.hooks import collect_all
+
 block_cipher = None
 ROOT = os.path.abspath(os.getcwd())
 
@@ -19,20 +21,29 @@ ROOT = os.path.abspath(os.getcwd())
 _icon = os.path.join(ROOT, "..", "..", "assets", "icon.ico")
 icon = _icon if os.path.isfile(_icon) else None
 
+# Bundle the COMPLETE PyQt6 runtime (all Qt DLLs + the platforms\qwindows.dll
+# plugin) so the tool runs on a clean Windows 10/11 PC. Together with the
+# matched PyQt6 / PyQt6-Qt6 versions in requirements.txt this avoids the
+# "DLL load failed while importing QtCore" launch error.
+pyqt_datas, pyqt_binaries, pyqt_hidden = collect_all("PyQt6")
+
 a = Analysis(
     ["license_manager.py"],
     pathex=[ROOT],
-    binaries=[],
-    datas=[],
-    hiddenimports=["ed25519", "licensing_core", "history_db"],
+    binaries=pyqt_binaries,
+    datas=pyqt_datas,
+    hiddenimports=pyqt_hidden + [
+        "ed25519", "licensing_core", "history_db",
+        "PyQt6.QtCore", "PyQt6.QtGui", "PyQt6.QtWidgets", "pkgutil",
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[
         "tkinter", "matplotlib", "numpy", "scipy", "pandas", "PIL",
         "PyQt6.QtWebEngineCore", "PyQt6.QtWebEngineWidgets", "PyQt6.QtQml",
-        "PyQt6.QtQuick", "PyQt6.QtMultimedia", "PyQt6.QtNetwork",
-        "PyQt6.QtPrintSupport", "PyQt6.QtBluetooth", "PyQt6.Qt3DCore",
+        "PyQt6.QtQuick", "PyQt6.QtMultimedia", "PyQt6.QtBluetooth",
+        "PyQt6.Qt3DCore",
     ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
