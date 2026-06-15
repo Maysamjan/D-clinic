@@ -12,6 +12,8 @@ Build:   pyinstaller --noconfirm D-Clinic.spec
 import os
 import sys
 
+from PyInstaller.utils.hooks import collect_all
+
 block_cipher = None
 ROOT = os.path.abspath(os.getcwd())
 
@@ -35,26 +37,38 @@ def collect_tree(src_root, dest_root):
 datas = [("app/resources/styles.qss", "app/resources")]
 datas += collect_tree("assets", "assets")
 
-# QtPrintSupport powers the printing/PDF features. winreg is imported lazily
-# inside the licensing module (Windows only) so it is bundled there to keep the
-# activation component intact.
-hiddenimports = ["PyQt6.QtPrintSupport"]
+# Pull in EVERY PyQt6 binary, plugin and data file (Qt DLLs, the
+# platforms/qwindows.dll plugin, styles, etc.) so the one-folder build runs on
+# a clean Windows 10/11 PC with no Python/Qt installed. This — together with the
+# matched PyQt6 / PyQt6-Qt6 versions pinned in requirements.txt — fixes the
+# "DLL load failed while importing QtCore" launch error.
+pyqt_datas, pyqt_binaries, pyqt_hidden = collect_all("PyQt6")
+datas += pyqt_datas
+
+# QtPrintSupport powers the printing/PDF features. The core Qt modules and
+# pkgutil are listed explicitly so PyInstaller never trims them. winreg is
+# imported lazily inside the licensing module (Windows only).
+hiddenimports = pyqt_hidden + [
+    "PyQt6.QtCore", "PyQt6.QtGui", "PyQt6.QtWidgets", "PyQt6.QtPrintSupport",
+    "pkgutil",
+]
 if sys.platform.startswith("win"):
     hiddenimports.append("winreg")
 
 # Trim modules the app never uses to shrink the build and speed up startup.
+# (Core Qt — QtCore/QtGui/QtWidgets/QtPrintSupport — is never excluded.)
 excludes = [
     "tkinter", "matplotlib", "numpy", "scipy", "pandas", "PIL",
     "pytest", "setuptools", "pip",
     "PyQt6.QtWebEngineCore", "PyQt6.QtWebEngineWidgets", "PyQt6.QtWebEngine",
     "PyQt6.QtQml", "PyQt6.QtQuick", "PyQt6.QtMultimedia", "PyQt6.QtBluetooth",
-    "PyQt6.Qt3DCore", "PyQt6.QtNetwork", "PyQt6.QtSql", "PyQt6.QtTest",
+    "PyQt6.Qt3DCore",
 ]
 
 a = Analysis(
     ["main.py"],
     pathex=[ROOT],
-    binaries=[],
+    binaries=pyqt_binaries,
     datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[],

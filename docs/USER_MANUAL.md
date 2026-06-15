@@ -52,7 +52,7 @@ D-Clinic is a complete, fully offline management system for dental clinics. It k
 
 | Item | Requirement |
 | --- | --- |
-| Operating system | Windows 8, Windows 10, or Windows 11 |
+| Operating system | Windows 10 or Windows 11 |
 | Internet | Not required |
 | Disk space | A few hundred megabytes free, plus space for attachments (X-rays, photos, PDFs) |
 | Display | 1366×768 or higher recommended |

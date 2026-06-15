@@ -138,14 +138,22 @@ C:\ProgramData\Zenith Soft\D-Clinic\
 (When you run from source it still uses the project folder, and a portable
 build with no `%PROGRAMDATA%` falls back to the folder next to the `.exe`.)
 
-### Tested Windows versions
+### Supported Windows versions
 
-The installer targets **Windows 8, 8.1, 10 and 11** (`MinVersion=6.2` in the
-`.iss`). The build was validated on the build host (spec parses, every
-resource is bundled, all imports resolve); **run the produced
-`D-Clinic-Setup-1.1.0.exe` once on each target Windows version** to confirm
-the full install → launch → activation → print flow before commercial
-release.
+D-Clinic 1.1.0 officially supports **Windows 10 and Windows 11** only
+(`MinVersion=10.0` in the `.iss`; Windows 8/8.1 are not supported because the
+Qt 6 runtime targets Windows 10+).
+
+> **Always build with `build.bat`**, which uses a **clean virtual environment**
+> and the **pinned, matched** PyQt6 packages (`PyQt6==6.6.1`,
+> `PyQt6-Qt6==6.6.1`, `PyQt6-sip==13.6.0`). A mismatch between `PyQt6` and
+> `PyQt6-Qt6` is what causes the launch error *"DLL load failed while importing
+> QtCore: The specified procedure could not be found."* — see
+> `docs/WINDOWS_COMPATIBILITY.md`.
+
+**Run the produced `D-Clinic-Setup-1.1.0.exe` once on a clean Windows 10 and a
+clean Windows 11 machine** to confirm the full install → launch → activation →
+print flow before commercial release.
 
 ---
 

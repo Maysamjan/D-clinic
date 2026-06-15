@@ -1,160 +1,133 @@
 # D-Clinic — Windows Compatibility Report
 
 **Product:** D-Clinic (Zenith Soft) · **Version:** 1.1.0
-**Targets requested:** Windows 8, Windows 8.1, Windows 10, Windows 11
-**Date:** 2026-06-14
+**Supported OS:** **Windows 10 and Windows 11** (64-bit)
+**Date:** 2026-06-15
 
-This report covers the pre-release Windows compatibility review: a dependency
-and API audit, the installer review, the known limitations, and the
-recommended action for each target OS.
+> **Windows 8 / 8.1 are NOT supported in this release.** The Qt 6 runtime that
+> powers D-Clinic officially targets Windows 10 and 11 only. Earlier drafts
+> explored a Windows 8 path; it has been **dropped** so the product has one
+> clean, tested, officially supported target.
 
 ---
 
-## 1. Executive summary
+## 1. Supported operating systems
 
-| Windows version | Status | Notes |
+| Windows version | Status |
+|---|---|
+| **Windows 11** | ✅ Supported |
+| **Windows 10** (64-bit, 1809 or newer) | ✅ Supported |
+| Windows 8.1 / 8 / 7 | ❌ Not supported |
+
+The Inno Setup installer enforces this with `MinVersion=10.0`, so it will not
+install on Windows 8/8.1 or older.
+
+---
+
+## 2. The launch error that was fixed
+
+Some builds failed at startup with:
+
+```
+ImportError: DLL load failed while importing QtCore:
+The specified procedure could not be found.
+```
+
+**Root cause:** a **version mismatch between the two PyQt6 packages** —
+`PyQt6` (the Python bindings) and `PyQt6-Qt6` (the actual Qt DLLs). When `pip`
+is left unpinned it can install, for example, `PyQt6 6.11.0` against
+`PyQt6-Qt6 6.11.1`. The bindings then call a Qt entry point (procedure) that
+does not exist in the other version's `Qt6Core.dll`, and Windows reports
+*"The specified procedure could not be found."*
+
+**Fix (applied):**
+
+1. **Pin the three PyQt6 packages to one matched Qt version** in
+   `requirements.txt`:
+   ```
+   PyQt6==6.6.1
+   PyQt6-Qt6==6.6.1
+   PyQt6-sip==13.6.0
+   ```
+   `PyQt6` and `PyQt6-Qt6` **must** be the same version (6.6.1 here).
+2. **Build inside a clean virtual environment** (`build.bat` now creates
+   `.venv-build`) so no stray/mismatched Qt DLLs from a global Python leak into
+   the build.
+3. **Bundle the complete PyQt6 runtime** in `D-Clinic.spec` via
+   `collect_all("PyQt6")` — every Qt DLL, the `platforms\qwindows.dll`
+   platform plugin, styles and imageformats — and list the core modules
+   (`QtCore`, `QtGui`, `QtWidgets`, `QtPrintSupport`) plus `pkgutil` as hidden
+   imports so PyInstaller never trims them.
+
+After these changes the bindings and the bundled Qt DLLs are guaranteed to be
+the same version, which removes the "specified procedure could not be found"
+error.
+
+---
+
+## 3. Dependency review
+
+| Dependency | Pinned | Notes |
 |---|---|---|
-| **Windows 11** | ✅ Fully supported | Primary target. PyInstaller one-folder build runs with no Python installed. |
-| **Windows 10** (1809+) | ✅ Fully supported | Primary target. Officially supported by Qt 6.5. |
-| **Windows 8.1** | ⚠️ Not guaranteed | The **application code** is fully compatible, but the **Qt 6 runtime** officially requires Windows 10. Use the PyQt5 build path (§6) for a guaranteed Windows 8.1 build. |
-| **Windows 8** | ⚠️ Not guaranteed | Same as 8.1. |
+| **PyQt6** | `==6.6.1` | GUI bindings |
+| **PyQt6-Qt6** | `==6.6.1` | Qt 6.6 binaries — **must match PyQt6** |
+| **PyQt6-sip** | `==13.6.0` | sip runtime for PyQt6 6.6.x |
+| sqlite3, hashlib, hmac, base64, json, uuid, platform, datetime, pkgutil | stdlib | — |
+| **winreg** | stdlib (Windows) | Machine-ID registry read; available on Win 10/11 |
 
-**Bottom line:** D-Clinic’s own code uses **no Windows 10/11-only APIs** and
-runs on every listed version. The single constraint is the GUI framework:
-**Qt 6 (PyQt6) officially targets Windows 10 and 11.** For a contractually
-guaranteed Windows 8 / 8.1 release, build against **PyQt5 (Qt 5.15 LTS)**,
-which officially supports Windows 7/8/8.1/10 — the steps are in §6 and require
-no changes to application logic, only the import layer.
+A full AST scan of `app/` finds **exactly one** external top-level import —
+`PyQt6`. No numpy / pandas / matplotlib / Pillow / requests; the charts are
+hand-painted with `QPainter`.
 
 ---
 
-## 2. Dependency review
+## 4. Application-code review
 
-D-Clinic has an intentionally tiny dependency surface, which keeps Windows
-compatibility risk very low.
-
-| Dependency | Source | Windows support |
-|---|---|---|
-| **PyQt6** (`>=6.5,<6.6`) | PyPI wheel (bundles Qt 6.5 LTS) | Win 10 / 11 (official). See §5. |
-| sqlite3, hashlib, hmac, base64, json, uuid, platform, datetime, os, sys | Python standard library | All Windows versions |
-| **winreg** | Python standard library (Windows) | All Windows versions (NT/2000+) |
-
-Verified automatically: a full AST scan of `app/` finds **exactly one**
-external top-level import — `PyQt6`. There are **no** numpy / pandas /
-matplotlib / Pillow / requests dependencies (the charts are hand-painted with
-`QPainter`, so there is no scientific-stack baggage to break across OS
-versions). The PyInstaller spec also explicitly *excludes* those modules.
+* The only OS-specific call is `winreg` (reads
+  `HKLM\SOFTWARE\Microsoft\Cryptography\MachineGuid`), available on Windows 10
+  and 11, wrapped in `try/except` with cross-platform fallbacks.
+* No Windows-11-only APIs, no WinRT, no `ctypes` Win32 calls, no DirectX.
+* Data is stored under `%PROGRAMDATA%\Zenith Soft\D-Clinic\`.
 
 ---
 
-## 3. Windows-specific API audit
-
-A search for OS-specific calls across the whole codebase returns a single
-site:
-
-* **`winreg`** in `app/services/license_service.py` — reads
-  `HKLM\SOFTWARE\Microsoft\Cryptography\MachineGuid` to derive a stable
-  Machine ID for licensing.
-  * Available on **every** Windows version since Windows 2000.
-  * Wrapped in `try/except` and guarded by `platform.system() == "Windows"`.
-  * Has cross-platform fallbacks (MAC address, hostname, CPU arch), so even if
-    the registry read fails the licensing still works.
-
-No use of any Windows 10/11-only API was found — no WinRT, no toast
-notifications, no `Qt.HighDpiScaleFactorRoundingPolicy` hacks, no DirectX 12,
-no `ctypes` Win32 calls, no `os.startfile` reliance, no PowerShell shelling
-out. File paths use `%PROGRAMDATA%` (valid since Windows Vista) with a
-portable fallback.
-
-**Conclusion:** the application layer is compatible with Windows 8, 8.1, 10
-and 11 without modification.
-
----
-
-## 4. Installer review
+## 5. Installer
 
 `installer/D-Clinic.iss` (Inno Setup 6):
 
-* `MinVersion=6.2` → the installer itself permits **Windows 8 (6.2), 8.1 (6.3),
-  10 and 11**. No change required to *allow* installation on the requested
-  targets.
-* Installs to `Program Files`, requires admin, and creates shared,
-  user-writable data folders under `%PROGRAMDATA%\Zenith Soft\D-Clinic\`
-  (`data`, `data\logos`, `backups`, `attachments`) with `users-modify`
-  permissions — valid on all four OS versions.
+* `MinVersion=10.0` → installs on **Windows 10 and 11 only**.
+* Installs to `Program Files` (admin), with shared, user-writable data folders
+  under `%PROGRAMDATA%\Zenith Soft\D-Clinic\` (`data`, `data\logos`, `backups`,
+  `attachments`).
 * Data is preserved on uninstall/upgrade.
-
-> ⚠️ **Installer caveat for Windows 8 / 8.1:** with a **PyQt6** build, the
-> installer will install successfully on Windows 8/8.1 but the Qt 6 runtime
-> may refuse to start (Qt 6 targets Windows 10+). Either ship the **PyQt5**
-> build (§6) for those machines, or raise `MinVersion` to `10.0` if you decide
-> to officially target only Windows 10/11. The current `MinVersion=6.2` is kept
-> so the same installer can serve a PyQt5 Windows 8/8.1 build.
+* Output: `installer\Output\D-Clinic-Setup-1.1.0.exe`.
 
 ---
 
-## 5. The Qt 6 / Windows 8 limitation (the one real risk)
+## 6. Build & verification steps
 
-* **Qt 6.5 LTS** (what PyQt6 ships) lists **Windows 10 (21H2) and Windows 11**
-  as supported platforms. Windows 8 / 8.1 are **not** on Qt 6’s supported list.
-* In practice a Qt 6 app *may* still launch on Windows 8.1, but this is
-  **unsupported and unverified** by the Qt Company and must not be promised to
-  a paying clinic without testing on the exact machine.
-* Pinning to the **Qt 6.5 LTS** line (`PyQt6>=6.5,<6.6`) is deliberate: later
-  Qt 6.6/6.7 releases tighten the Windows-10 baseline further, so 6.5 LTS gives
-  the broadest, most stable footprint for the Windows 10/11 target.
+Build from a **clean virtual environment** on a Windows 10/11 machine:
 
----
+```bat
+build.bat
+```
 
-## 6. Guaranteed Windows 8 / 8.1 path (PyQt5 build)
+`build.bat` will: create `.venv-build`, install the pinned requirements +
+PyInstaller, assert that `PyQt6` and the Qt runtime versions match, build
+`dist\D-Clinic\D-Clinic.exe`, and (if Inno Setup 6 is present) produce
+`installer\Output\D-Clinic-Setup-1.1.0.exe`.
 
-If a confirmed Windows 8 or 8.1 deployment is required, build against
-**PyQt5 (Qt 5.15 LTS)**, which officially supports Windows 7/8/8.1/10. Because
-the app already isolates Qt usage behind a small set of widgets and uses
-fully-scoped enums, the port is mechanical:
+Confirm, in order:
 
-1. `pip install PyQt5==5.15.*` instead of PyQt6.
-2. Replace `PyQt6` imports with `PyQt5` and move `QAction`/`QShortcut` from
-   `QtGui` back to `QtWidgets` (PyQt5 location).
-3. `QtGui.QPageLayout`/`QPageSize` and the fully-scoped enum names
-   (`Qt.AlignmentFlag.AlignCenter`, etc.) are available in PyQt5 5.15, so most
-   call sites are unchanged.
-4. Rebuild with the same PyInstaller spec (swap the excluded/hidden Qt module
-   names) and the same Inno Setup script.
-
-No business logic, database, licensing, theming or printing code needs to
-change — only the import/runtime layer.
-
-> A future maintenance task could add a thin `app/qt.py` shim that re-exports
-> the Qt modules, so a single switch selects PyQt5 vs PyQt6 at build time.
-
----
-
-## 7. Pre-release validation checklist (run on each target OS)
-
-Build the installer (`build.bat`) and, on a clean VM of **each** target
-Windows version, confirm:
-
-- [ ] Installer runs and completes (Win 8 / 8.1 / 10 / 11).
-- [ ] App launches to the activation screen.
-- [ ] Activation with a FULL key, and with a DEMO key.
-- [ ] Login (admin/admin), then change password.
-- [ ] Patient add/search/edit; DEMO patient-cap message at the limit.
-- [ ] Print and PDF export of an invoice / patient file — including the DEMO
-      watermark on demo builds.
-- [ ] Backup now, export backup, restore backup.
-- [ ] Light ⇄ Dark theme switch, Persian ⇄ English switch.
+- [ ] `python main.py` launches (activation screen appears).
+- [ ] `dist\D-Clinic\D-Clinic.exe` launches with **no** QtCore DLL error.
+- [ ] Activation (FULL + DEMO), login (admin/admin), patient add/search.
+- [ ] Print / PDF export of an invoice and a prescription (with the logo);
+      DEMO watermark on demo builds.
+- [ ] Backup now, export, restore.
+- [ ] Light ⇄ Dark and Persian ⇄ English switches.
 - [ ] About page shows DEMO remaining days + patient quota.
-- [ ] Move the system clock backwards → app blocks with the clock-error
-      message; restore the clock → app runs again.
+- [ ] Clock-rollback is blocked, then runs again once the date is corrected.
 
----
-
-## 8. Recommendation
-
-* **Officially advertise Windows 10 and Windows 11** for the v1.1.0 PyQt6
-  release — these are fully supported and tested in CI builds.
-* For any clinic on **Windows 8 / 8.1**, ship the **PyQt5 build** (§6) and
-  validate on that machine before delivery.
-* Keep the dependency pinned to the Qt 6.5 LTS line until a deliberate, tested
-  upgrade.
+Run the `.exe` once on a clean **Windows 10** and a clean **Windows 11**
+machine before commercial release.

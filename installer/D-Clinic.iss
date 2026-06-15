@@ -45,12 +45,9 @@ SolidCompression=yes
 OutputDir=Output
 OutputBaseFilename=D-Clinic-Setup-{#MyAppVersion}
 
-; Allows install on Windows 8 (6.2), 8.1 (6.3), 10 and 11 (and Server
-; equivalents). NOTE: a PyQt6 build officially runs on Windows 10/11; for a
-; guaranteed Windows 8/8.1 deployment ship the PyQt5 build (see
-; docs/WINDOWS_COMPATIBILITY.md). Raise this to 10.0 if you decide to target
-; only Windows 10/11.
-MinVersion=6.2
+; Supported OS: Windows 10 and Windows 11 only. MinVersion=10.0 blocks install
+; on Windows 8 / 8.1 (and older), which the Qt 6 runtime does not support.
+MinVersion=10.0
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

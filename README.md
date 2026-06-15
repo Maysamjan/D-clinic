@@ -48,7 +48,7 @@ connection**.
 
 ### Requirements
 - Python 3.10+
-- Windows (primary target), also runs on Linux / macOS
+- **Windows 10 / Windows 11** (64-bit) — the officially supported target. Also runs on Linux / macOS for development.
 
 ### Install & Run
 ```bash
